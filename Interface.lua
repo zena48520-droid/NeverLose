@@ -46,7 +46,7 @@ local function cretate_button(asd)
 
 end
 
-local function ConnectButtonEffect(UIFrame:Frame&TextButton&ImageLabel,UIStroke:UIStroke,int)
+local function ConnectButtonEffect(UIFrame,UIStroke,int)
 
 	if not UIStroke then
 
@@ -84,17 +84,17 @@ local function ConnectButtonEffect(UIFrame:Frame&TextButton&ImageLabel,UIStroke:
 
 end
 
-local function scrolling_connect(scrollframe:ScrollingFrame)
+local function scrolling_connect(scrollframe)
 
-	task.spawn(function())
+	task.spawn(function()
 
 		local addres = 45
 
-		local UIListLayout:UIListLayout = scrollframe:WaitForChild('UIListLayout',9999999)
+		local UIListLayout = scrollframe:WaitForChild('UIListLayout',9999999)
 
 		scrollframe.CanvasSize=UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y+addres)
 
-		UIListLayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function())
+		UIListLayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
 
 			scrollframe.CanvasSize=UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y+addres)
 
@@ -398,7 +398,7 @@ function NEVERLOSE:AddWindow(NameScriptHub,Text,UICustomSize)
 
 	--Anti Spoofer
 
-	ScreenGui:GetPropertyChangedSignal('Enabled'):Connect(function())
+	ScreenGui:GetPropertyChangedSignal('Enabled'):Connect(function()
 
 		if not ScreenGui.Enabled then
 
@@ -408,7 +408,7 @@ function NEVERLOSE:AddWindow(NameScriptHub,Text,UICustomSize)
 
 	end)
 
-	task.spawn(function())
+	task.spawn(function()
 
 		if Text then
 
@@ -533,10 +533,9 @@ function NEVERLOSE:AddWindow(NameScriptHub,Text,UICustomSize)
 
 	end
 
-end
 
 
-task.spawn(function())
+task.spawn(function()
 
 	local ImageButton = Instance.new("ImageButton")
 
@@ -563,7 +562,7 @@ task.spawn(function())
 
 	ImageButton.ScaleType = Enum.ScaleType.Fit
 
-	ImageButton.MouseButton1Click:Connect(function())
+	ImageButton.MouseButton1Click:Connect(function()
 
 		toggle_valu=not toggle_valu
 
@@ -603,7 +602,7 @@ task.spawn(function())
 end)
 
 
-task.spawn(function())
+task.spawn(function()
 
 	local dragToggle = nil
 
@@ -636,7 +635,7 @@ task.spawn(function())
 
 			startPos = Frame.Position
 
-			input.Changed:Connect(function())
+			input.Changed:Connect(function()
 
 				if input.UserInputState == Enum.UserInputState.End then
 
@@ -1555,7 +1554,7 @@ function WindowFunctinos:AddTabLabel(Label)
 
 						local a=math.ceil(1)
 
-						for i,v:Frame|TextLabel in ipairs(Section:GetChildren()) do
+						for i,v in ipairs(Section:GetChildren()) do
 
 							if v:isA('Frame') or v:isA('TextLabel') then
 
@@ -1582,7 +1581,7 @@ function WindowFunctinos:AddTabLabel(Label)
 
 				local a=math.ceil(1)
 
-				for i,v:Frame|TextLabel in ipairs(Section:GetChildren()) do
+				for i,v in ipairs(Section:GetChildren()) do
 
 					if v:isA('Frame') or v:isA('TextLabel') then
 
@@ -2085,19 +2084,6 @@ function WindowFunctinos:AddTabLabel(Label)
 
 		end
 
-						TweenService:Create(Toggle,TweenInfo.new(1.5,Enum.EasingStyle.Quint),{Size = UDim2.new(0,0,0,0)}):Play()
-
-						TweenService:Create(LabelText,TweenInfo.new(1,Enum.EasingStyle.Quint),{TextTransparency = 1}):Play()
-
-					end
-
-				end
-
-
-				return button_func
-
-
-			end
 
 			function sectionfunc:AddKeybind(KeybindNameString,Default,callback)
 
@@ -2105,7 +2091,7 @@ function WindowFunctinos:AddTabLabel(Label)
 
 				end
 
-				local function gt(a:Enum.KeyCode)
+				local function gt(a)
 
 					if not a then
 
@@ -3025,7 +3011,7 @@ function WindowFunctinos:AddTabLabel(Label)
 					local a=0
 
 
-					for i,v:TextButton in ipairs(DownBar:GetChildren()) do
+					for i,v in ipairs(DownBar:GetChildren()) do
 
 						if v:isA('TextButton') then
 
@@ -3045,7 +3031,7 @@ function WindowFunctinos:AddTabLabel(Label)
 					local a=0
 
 
-					for i,v:TextButton in ipairs(DownBar:GetChildren()) do
+					for i,v in ipairs(DownBar:GetChildren()) do
 
 						if v:isA('TextButton') then
 
@@ -3089,7 +3075,7 @@ function WindowFunctinos:AddTabLabel(Label)
 
 						auto_updatea()
 
-						for i,v:TextButton in ipairs(DownBar:GetChildren()) do
+						for i,v in ipairs(DownBar:GetChildren()) do
 
 							if v:isA('TextButton') then
 
@@ -3111,7 +3097,7 @@ function WindowFunctinos:AddTabLabel(Label)
 
 					else
 
-						for i,v:TextButton in ipairs(DownBar:GetChildren()) do
+						for i,v in ipairs(DownBar:GetChildren()) do
 
 							if v:isA('TextButton') then
 
@@ -3219,7 +3205,7 @@ function WindowFunctinos:AddTabLabel(Label)
 
 				local function refresh()
 
-					for i,v:TextButton in ipairs(DownBar:GetChildren()) do
+					for i,v in ipairs(DownBar:GetChildren()) do
 
 						if v:isA('TextButton') then
 
@@ -3399,8 +3385,9 @@ function WindowFunctinos:AddTabLabel(Label)
 
 	return WindowFunctinos
 
-end
 
+
+end
 
 function NEVERLOSE:KeySystem(TitleName,LinkKey,callback)
 

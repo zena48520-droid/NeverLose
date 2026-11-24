@@ -354,6 +354,14 @@ WindowBorderStroke.Thickness = 3
 WindowBorderStroke.Transparency = 0
 WindowBorderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 WindowBorderStroke.Parent = Frame
+-- Lapisan glow lembut agar border tetap terlihat pada warna UI gelap maupun terang.
+local WindowBorderGlow = Instance.new("UIStroke")
+WindowBorderGlow.Name = "WindowBorderGlow"
+WindowBorderGlow.Color = NEVERLOSE.Themes.StrokeColor
+WindowBorderGlow.Thickness = 6
+WindowBorderGlow.Transparency = 0.72
+WindowBorderGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+WindowBorderGlow.Parent = Frame
 Frame_2.Parent = Frame
 Frame_2.BackgroundColor3 = NEVERLOSE.Themes.BlackColor
 Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -543,6 +551,7 @@ local TabFunctions = {}
 local TabButton = Instance.new("Frame")
 local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
 local UICorner = Instance.new("UICorner")
+local TabStroke = Instance.new("UIStroke")
 local Image = Instance.new("ImageLabel")
 local UICorner_2 = Instance.new("UICorner")
 local Label = Instance.new("TextLabel")
@@ -561,8 +570,14 @@ TabButton.ZIndex = 5
 UIAspectRatioConstraint.Parent = TabButton
 UIAspectRatioConstraint.AspectRatio = 4
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 9)
 UICorner.Parent = TabButton
+TabStroke.Name = "TabAccentStroke"
+TabStroke.Color = NEVERLOSE.Themes.MainColor
+TabStroke.Thickness = 1.15
+TabStroke.Transparency = 0.78
+TabStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+TabStroke.Parent = TabButton
 Image.Name = "Image"
 Image.Parent = TabButton
 Image.AnchorPoint = Vector2.new(0, 0.5)
@@ -578,7 +593,7 @@ Image.ImageColor3 = NEVERLOSE.Themes.MainColor
 Image.ImageRectOffset = Vector2.new(205, 565)
 Image.ImageRectSize = Vector2.new(35, 35)
 GetImageData(tostring(IconType), Image)
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 7)
 UICorner_2.Parent = Image
 Label.Name = "Label"
 Label.Parent = TabButton
@@ -668,11 +683,15 @@ end
 Tab.Visible = true
 TweenService:Create(Tab, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, 0, 0.5, 0) }):Play()
 TweenService:Create(Tab, TweenInfo.new(0.75, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0.99000001, 0, 0.99000001, 0) }):Play()
-TweenService:Create(TabButton, TweenInfo.new(0.3), { BackgroundTransparency = 0.6 }):Play()
+TweenService:Create(TabButton, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { BackgroundTransparency = 0.22 }):Play()
+TweenService:Create(TabStroke, TweenInfo.new(0.25), { Transparency = 0.05, Thickness = 1.5 }):Play()
+TweenService:Create(Image, TweenInfo.new(0.25), { ImageColor3 = NEVERLOSE.Themes.MainColor }):Play()
 else
 Tab.Visible = false
 TweenService:Create(Tab, TweenInfo.new(0.5), { Position = UDim2.new(0.5, 0, 1.5, 0) }):Play()
-TweenService:Create(TabButton, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
+TweenService:Create(TabButton, TweenInfo.new(0.25), { BackgroundTransparency = 1 }):Play()
+TweenService:Create(TabStroke, TweenInfo.new(0.25), { Transparency = 0.78, Thickness = 1 }):Play()
+TweenService:Create(Image, TweenInfo.new(0.25), { ImageColor3 = NEVERLOSE.Themes.TextColor }):Play()
 end
 end
 if #Tabs == 0 then
@@ -1578,7 +1597,7 @@ end
 -- Semua pakai Frame + UICorner 3 + UIStroke + LabelText kiri + Box kanan, AspectRatio 7
 -- Tanpa hapus AddButton / AddLabel / AddToggle / AddKeybind / AddSlider / AddDropdown di atas
 -- ============================================================================
-function sectionfunc:AddInput(InputName, Placeholder, Default, callback)
+function sectionfunc:AddInput(InputName, Placeholder, Default, callback, liveUpdate)
 if type(Default) == "function" then
 callback = Default
 Default = ""
@@ -1680,6 +1699,9 @@ callback(current, enterPressed)
 end)
 TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 current = TextBox.Text
+if liveUpdate then
+callback(current, false)
+end
 end)
 local func = {}
 function func:Text(a)
@@ -2575,55 +2597,102 @@ return sectionfunc
 end
 return TabFunctions
 end
--- Ubah warna utama window memakai nomor BrickColor Roblox.
--- Bisa dipanggil langsung atau dari callback AddInput.
-function WindowFunctinos:SetUIColor(colorId)
-local id = tonumber(colorId)
-if not id or id ~= math.floor(id) or id ~= id or id == math.huge or id == -math.huge then
-return false, "Masukkan nomor BrickColor yang valid"
+-- Penerjemah nama warna ke Color3. Menerima nama warna, HEX, atau RGB.
+local COLOR_NAMES = {
+    ["midnight navy"] = Color3.fromRGB(17, 24, 39), ["midnight blue"] = Color3.fromRGB(15, 23, 42),
+    ["slate"] = Color3.fromRGB(30, 41, 59), ["charcoal"] = Color3.fromRGB(24, 24, 27),
+    ["deep purple"] = Color3.fromRGB(45, 35, 70), ["electric lavender"] = Color3.fromRGB(167, 139, 250),
+    ["soft lavender"] = Color3.fromRGB(196, 181, 253), ["ice cyan"] = Color3.fromRGB(103, 232, 249),
+    ["neon cyan"] = Color3.fromRGB(34, 211, 238), ["soft mint"] = Color3.fromRGB(110, 231, 183),
+    ["sunset coral"] = Color3.fromRGB(251, 113, 133), ["champagne"] = Color3.fromRGB(245, 222, 179),
+    ["red"] = Color3.fromRGB(255, 0, 0), ["merah"] = Color3.fromRGB(255, 0, 0),
+    ["green"] = Color3.fromRGB(0, 255, 0), ["hijau"] = Color3.fromRGB(0, 255, 0),
+    ["blue"] = Color3.fromRGB(0, 120, 255), ["biru"] = Color3.fromRGB(0, 120, 255), ["biru terang"] = Color3.fromRGB(0, 170, 255),
+    ["pastel blue"] = Color3.fromRGB(174, 198, 207), ["baby blue"] = Color3.fromRGB(137, 207, 240),
+    ["powder blue"] = Color3.fromRGB(176, 224, 230), ["steel blue"] = Color3.fromRGB(70, 130, 180),
+    ["sky blue"] = Color3.fromRGB(135, 206, 235), ["cornflower blue"] = Color3.fromRGB(100, 149, 237),
+    ["navy"] = Color3.fromRGB(0, 0, 128), ["biru navy"] = Color3.fromRGB(0, 0, 128),
+    ["cyan"] = Color3.fromRGB(0, 255, 255), ["turquoise"] = Color3.fromRGB(64, 224, 208), ["teal"] = Color3.fromRGB(0, 128, 128),
+    ["purple"] = Color3.fromRGB(128, 0, 255), ["ungu"] = Color3.fromRGB(170, 0, 255), ["lavender"] = Color3.fromRGB(230, 230, 250),
+    ["periwinkle"] = Color3.fromRGB(204, 204, 255), ["amethyst"] = Color3.fromRGB(153, 102, 204),
+    ["lilac"] = Color3.fromRGB(200, 162, 200), ["violet"] = Color3.fromRGB(138, 43, 226),
+    ["pink"] = Color3.fromRGB(255, 105, 180), ["merah muda"] = Color3.fromRGB(255, 105, 180), ["rose pink"] = Color3.fromRGB(255, 102, 153),
+    ["hot pink"] = Color3.fromRGB(255, 20, 147), ["pastel pink"] = Color3.fromRGB(255, 209, 220), ["baby pink"] = Color3.fromRGB(244, 194, 194),
+    ["orange"] = Color3.fromRGB(255, 140, 0), ["oranye"] = Color3.fromRGB(255, 140, 0), ["peach"] = Color3.fromRGB(255, 218, 185),
+    ["gold"] = Color3.fromRGB(255, 215, 0), ["emas"] = Color3.fromRGB(255, 215, 0), ["yellow"] = Color3.fromRGB(255, 255, 0), ["kuning"] = Color3.fromRGB(255, 220, 0),
+    ["white"] = Color3.fromRGB(255, 255, 255), ["putih"] = Color3.fromRGB(255, 255, 255), ["black"] = Color3.fromRGB(20, 20, 20), ["hitam"] = Color3.fromRGB(20, 20, 20),
+    ["gray"] = Color3.fromRGB(128, 128, 128), ["grey"] = Color3.fromRGB(128, 128, 128), ["abu abu"] = Color3.fromRGB(128, 128, 128),
+    ["silver"] = Color3.fromRGB(192, 192, 192), ["cream"] = Color3.fromRGB(255, 253, 208), ["ivory"] = Color3.fromRGB(255, 255, 240),
+    ["beige"] = Color3.fromRGB(245, 245, 220), ["brown"] = Color3.fromRGB(139, 69, 19), ["cokelat"] = Color3.fromRGB(139, 69, 19),
+    ["mint"] = Color3.fromRGB(189, 252, 201), ["mint green"] = Color3.fromRGB(152, 255, 152), ["lime"] = Color3.fromRGB(50, 205, 50),
+    ["coral"] = Color3.fromRGB(255, 127, 80), ["salmon"] = Color3.fromRGB(250, 128, 114), ["crimson"] = Color3.fromRGB(220, 20, 60),
+    ["indigo"] = Color3.fromRGB(75, 0, 130), ["pearl"] = Color3.fromRGB(234, 224, 200), ["aqua"] = Color3.fromRGB(0, 255, 200),
+}
+local function Color3ToHex(color)
+    return string.format("#%02X%02X%02X", math.floor(color.R * 255 + 0.5), math.floor(color.G * 255 + 0.5), math.floor(color.B * 255 + 0.5))
 end
-local ok, brick = pcall(function()
-return BrickColor.new(id)
-end)
-if not ok or not brick then
-return false, "Nomor BrickColor tidak valid"
-end
-local color = brick.Color
-Frame.BackgroundColor3 = color
-Frame_2.BackgroundColor3 = color
-Frame_3.BackgroundColor3 = color
-NEVERLOSE.Themes.BlackgroundColor = color
-NEVERLOSE.Themes.BlackColor = color
-NEVERLOSE.Themes.HeaderColor = color
-return true, color
+local function ParseColor(value)
+    if typeof(value) ~= "string" then return nil, "Ketik nama warna, HEX, atau RGB" end
+    local raw = value:gsub("^%s+", ""):gsub("%s+$", "")
+    local key = raw:lower():gsub("[_%-]", " "):gsub("%s+", " ")
+    if COLOR_NAMES[key] then return COLOR_NAMES[key] end
+    local hex = raw:gsub("%s+", ""):gsub("^#", "")
+    if #hex == 6 and hex:match("^[%x]+$") then
+        local ok, result = pcall(function() return Color3.fromHex(hex) end)
+        if ok then return result end
+    end
+    local r, g, b = raw:match("^[Rr][Gg][Bb]%s*%(%s*(%d+)%s*,%s*(%d+)%s*,%s*(%d+)%s*%)$")
+    if not r then r, g, b = raw:match("^(%d+)%s*,%s*(%d+)%s*,%s*(%d+)$") end
+    if r then
+        r, g, b = tonumber(r), tonumber(g), tonumber(b)
+        if r <= 255 and g <= 255 and b <= 255 then return Color3.fromRGB(r, g, b) end
+    end
+    return nil, "Warna tidak dikenal. Coba Pastel Blue, Lavender, Gold, #6495ED, atau rgb(100,149,237)."
 end
 
--- Ubah warna garis pinggir utama window memakai nomor BrickColor Roblox.
-function WindowFunctinos:SetBorderColor(colorId)
-local id = tonumber(colorId)
-if not id or id ~= math.floor(id) or id ~= id or id == math.huge or id == -math.huge then
-return false, "Masukkan nomor BrickColor yang valid"
-end
-local ok, brick = pcall(function()
-return BrickColor.new(id)
-end)
-if not ok or not brick then
-return false, "Nomor BrickColor tidak valid"
-end
-WindowBorderStroke.Color = brick.Color
-NEVERLOSE.Themes.StrokeColor = brick.Color
-return true, brick.Color
+function WindowFunctinos:SetUIColor(colorName)
+    local color, message = ParseColor(colorName)
+    if not color then return false, message end
+    Frame.BackgroundColor3 = color
+    Frame_2.BackgroundColor3 = color
+    Frame_3.BackgroundColor3 = color
+    NEVERLOSE.Themes.BlackgroundColor = color
+    NEVERLOSE.Themes.BlackColor = color
+    NEVERLOSE.Themes.HeaderColor = color
+    return true, Color3ToHex(color)
 end
 
--- Ketebalan dibatasi agar border tetap terlihat dan tidak menutupi isi GUI.
+function WindowFunctinos:SetBorderColor(colorName)
+    local color, message = ParseColor(colorName)
+    if not color then return false, message end
+    WindowBorderStroke.Color = color
+    if WindowBorderGlow then WindowBorderGlow.Color = color end
+    NEVERLOSE.Themes.StrokeColor = color
+    return true, Color3ToHex(color)
+end
+
 function WindowFunctinos:SetBorderThickness(thickness)
-local value = tonumber(thickness)
-if not value or value ~= value or value == math.huge or value == -math.huge then
-return false, "Masukkan ketebalan angka yang valid"
+    local value = tonumber(thickness)
+    if not value or value ~= value or value == math.huge or value == -math.huge then return false, "Masukkan ketebalan angka yang valid" end
+    value = math.clamp(value, 1, 10)
+    WindowBorderStroke.Thickness = value
+    if WindowBorderGlow then WindowBorderGlow.Thickness = math.clamp(value + 3, 4, 14) end
+    return true, value
 end
-value = math.clamp(value, 0.5, 12)
-WindowBorderStroke.Thickness = value
-return true, value
+
+function WindowFunctinos:SetWindowShape(shapeName)
+    local key = tostring(shapeName or ""):lower():gsub("%s+", "")
+    local radius
+    if key == "square" or key == "kotak" then radius = UDim.new(0, 0)
+    elseif key == "rounded" or key == "roundedcorner" or key == "membulat" then radius = UDim.new(0, 16)
+    elseif key == "capsule" or key == "pill" then radius = UDim.new(0.5, 0)
+    elseif key == "soft" or key == "softrounded" then radius = UDim.new(0, 24)
+    elseif key == "smooth" then radius = UDim.new(0, 10)
+    else return false, "Pilih Square, Rounded, Capsule, Soft, atau Smooth" end
+    UICorner.CornerRadius = radius
+    UICorner_2.CornerRadius = radius
+    UICorner_3.CornerRadius = radius
+    return true, shapeName
 end
 
 function WindowFunctinos:Delete()
@@ -3294,9 +3363,9 @@ end
 end)
 end
 function NEVERLOSE:AddGUISettings(oxyWindow)
-local guiTab = oxyWindow:AddTab("gui", "rbxassetid://10734951847")
-local guiSec = guiTab:AddSection("gui warna", "left")
-local guiAppearanceSec = guiTab:AddSection("warna & border window", "right")
+local guiTab = oxyWindow:AddTab("Appearance", "home")
+local guiSec = guiTab:AddSection("GUI Theme", "left")
+local guiAppearanceSec = guiTab:AddSection("Window Style", "right")
 local guiManualSec = guiTab:AddSection("manual spam ui", "left")
 local guiTriggerSec = guiTab:AddSection("triggerbot ui", "right")
 local guiSizeSec = guiTab:AddSection("size & opacity", "right")
@@ -3325,22 +3394,30 @@ warnaList2[8] = "Cyan"
 warnaList2[9] = "Putih"
 warnaList2[10] = "Hitam"
 warnaList2[11] = "Biru Gelap"
--- Semua kontrol tampilan window utama dibuat memakai section:AddInput.
--- Nomor warna yang dipakai adalah nomor BrickColor Roblox, bukan asset ID.
-local defaultUIBrickColor = BrickColor.new(NEVERLOSE.Themes.BlackgroundColor).Number
-local defaultBorderBrickColor = BrickColor.new(NEVERLOSE.Themes.StrokeColor).Number
-guiAppearanceSec:AddInput("nomor warna UI", "contoh: 1004", tostring(defaultUIBrickColor), function(value)
-local ok, message = oxyWindow:SetUIColor(value)
-if not ok then warn("[NEVERLOSE] Warna UI: " .. tostring(message)) end
+-- Tema rekomendasi: panel Midnight Navy dengan aksen Electric Lavender.
+-- Input warna live: setiap perubahan teks langsung diterjemahkan ke HEX.
+oxyWindow:SetUIColor("Midnight Navy")
+oxyWindow:SetBorderColor("Electric Lavender")
+local uiHexResult = guiAppearanceSec:AddParagraph("HEX UI: " .. Color3ToHex(NEVERLOSE.Themes.BlackgroundColor))
+local borderHexResult = guiAppearanceSec:AddParagraph("HEX Border: " .. Color3ToHex(NEVERLOSE.Themes.StrokeColor))
+guiAppearanceSec:AddParagraph("Tema rekomendasi: Midnight Navy + Electric Lavender. Ketik nama warna Indonesia/Inggris, HEX, atau RGB.")
+guiAppearanceSec:AddInput("warna UI (nama warna)", "Midnight Navy / Slate / Pastel Blue", "Midnight Navy", function(value)
+    local ok, result = oxyWindow:SetUIColor(value)
+    if ok then uiHexResult:Text("HEX UI: " .. result) else uiHexResult:Text("HEX UI: — | " .. tostring(result)) end
+end, true)
+guiAppearanceSec:AddInput("warna border (nama warna)", "Electric Lavender / Ice Cyan / Gold", "Electric Lavender", function(value)
+    local ok, result = oxyWindow:SetBorderColor(value)
+    if ok then borderHexResult:Text("HEX Border: " .. result) else borderHexResult:Text("HEX Border: — | " .. tostring(result)) end
+end, true)
+guiAppearanceSec:AddInput("ketebalan border", "1 - 10", "3", function(value)
+    local ok, result = oxyWindow:SetBorderThickness(value)
+    if not ok then warn("[NEVERLOSE] Ketebalan border: " .. tostring(result)) end
 end)
-guiAppearanceSec:AddInput("nomor warna border", "contoh: 1003", tostring(defaultBorderBrickColor), function(value)
-local ok, message = oxyWindow:SetBorderColor(value)
-if not ok then warn("[NEVERLOSE] Warna border: " .. tostring(message)) end
+guiAppearanceSec:AddDropdown("bentuk window asli", {"Square", "Rounded", "Capsule", "Soft", "Smooth"}, "Rounded", function(value)
+    local ok, message = oxyWindow:SetWindowShape(value)
+    if not ok then warn("[NEVERLOSE] Bentuk window: " .. tostring(message)) end
 end)
-guiAppearanceSec:AddInput("ketebalan border", "0.5 - 12", "3", function(value)
-local ok, message = oxyWindow:SetBorderThickness(value)
-if not ok then warn("[NEVERLOSE] Ketebalan border: " .. tostring(message)) end
-end)
+oxyWindow:SetWindowShape("Rounded")
 
 guiSec:AddDropdown("warna gui asli", warnaList, "Biru Terang", function(v) NEVERLOSE:SetGUIColor(v) end)
 guiSec:AddToggle("rainbow gui asli", false, function(v) NEVERLOSE:SetGUIRainbow(v) end)

@@ -343,14 +343,14 @@ Frame.BorderSizePixel = 0
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.Size = UDim2.new(0, 0, 0, 0)
 Frame.ZIndex = 2
-Frame.ClipsDescendants = true
+Frame.ClipsDescendants = false -- UIStroke border tidak terpotong oleh clipping parent
 TweenService:Create(Frame, TweenInfo.new(1, Enum.EasingStyle.Quint), { Size = ooldsize }):Play()
 UICorner.Parent = Frame
 -- BORDER UTAMA WINDOW: UIStroke pada tepi luar GUI
 local WindowBorderStroke = Instance.new("UIStroke")
 WindowBorderStroke.Name = "WindowBorderStroke"
 WindowBorderStroke.Color = NEVERLOSE.Themes.StrokeColor
-WindowBorderStroke.Thickness = 2
+WindowBorderStroke.Thickness = 3
 WindowBorderStroke.Transparency = 0
 WindowBorderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 WindowBorderStroke.Parent = Frame
@@ -3337,7 +3337,7 @@ guiAppearanceSec:AddInput("nomor warna border", "contoh: 1003", tostring(default
 local ok, message = oxyWindow:SetBorderColor(value)
 if not ok then warn("[NEVERLOSE] Warna border: " .. tostring(message)) end
 end)
-guiAppearanceSec:AddInput("ketebalan border", "0.5 - 12", "2", function(value)
+guiAppearanceSec:AddInput("ketebalan border", "0.5 - 12", "3", function(value)
 local ok, message = oxyWindow:SetBorderThickness(value)
 if not ok then warn("[NEVERLOSE] Ketebalan border: " .. tostring(message)) end
 end)

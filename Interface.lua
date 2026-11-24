@@ -346,6 +346,14 @@ Frame.ZIndex = 2
 Frame.ClipsDescendants = true
 TweenService:Create(Frame, TweenInfo.new(1, Enum.EasingStyle.Quint), { Size = ooldsize }):Play()
 UICorner.Parent = Frame
+-- BORDER UTAMA WINDOW: UIStroke pada tepi luar GUI
+local WindowBorderStroke = Instance.new("UIStroke")
+WindowBorderStroke.Name = "WindowBorderStroke"
+WindowBorderStroke.Color = NEVERLOSE.Themes.StrokeColor
+WindowBorderStroke.Thickness = 2
+WindowBorderStroke.Transparency = 0
+WindowBorderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+WindowBorderStroke.Parent = Frame
 Frame_2.Parent = Frame
 Frame_2.BackgroundColor3 = NEVERLOSE.Themes.BlackColor
 Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -2567,6 +2575,57 @@ return sectionfunc
 end
 return TabFunctions
 end
+-- Ubah warna utama window memakai nomor BrickColor Roblox.
+-- Bisa dipanggil langsung atau dari callback AddInput.
+function WindowFunctinos:SetUIColor(colorId)
+local id = tonumber(colorId)
+if not id or id ~= math.floor(id) or id ~= id or id == math.huge or id == -math.huge then
+return false, "Masukkan nomor BrickColor yang valid"
+end
+local ok, brick = pcall(function()
+return BrickColor.new(id)
+end)
+if not ok or not brick then
+return false, "Nomor BrickColor tidak valid"
+end
+local color = brick.Color
+Frame.BackgroundColor3 = color
+Frame_2.BackgroundColor3 = color
+Frame_3.BackgroundColor3 = color
+NEVERLOSE.Themes.BlackgroundColor = color
+NEVERLOSE.Themes.BlackColor = color
+NEVERLOSE.Themes.HeaderColor = color
+return true, color
+end
+
+-- Ubah warna garis pinggir utama window memakai nomor BrickColor Roblox.
+function WindowFunctinos:SetBorderColor(colorId)
+local id = tonumber(colorId)
+if not id or id ~= math.floor(id) or id ~= id or id == math.huge or id == -math.huge then
+return false, "Masukkan nomor BrickColor yang valid"
+end
+local ok, brick = pcall(function()
+return BrickColor.new(id)
+end)
+if not ok or not brick then
+return false, "Nomor BrickColor tidak valid"
+end
+WindowBorderStroke.Color = brick.Color
+NEVERLOSE.Themes.StrokeColor = brick.Color
+return true, brick.Color
+end
+
+-- Ketebalan dibatasi agar border tetap terlihat dan tidak menutupi isi GUI.
+function WindowFunctinos:SetBorderThickness(thickness)
+local value = tonumber(thickness)
+if not value or value ~= value or value == math.huge or value == -math.huge then
+return false, "Masukkan ketebalan angka yang valid"
+end
+value = math.clamp(value, 0.5, 12)
+WindowBorderStroke.Thickness = value
+return true, value
+end
+
 function WindowFunctinos:Delete()
 return ScreenGui:Destroy()
 end
@@ -3237,6 +3296,7 @@ end
 function NEVERLOSE:AddGUISettings(oxyWindow)
 local guiTab = oxyWindow:AddTab("gui", "rbxassetid://10734951847")
 local guiSec = guiTab:AddSection("gui warna", "left")
+local guiAppearanceSec = guiTab:AddSection("warna & border window", "right")
 local guiManualSec = guiTab:AddSection("manual spam ui", "left")
 local guiTriggerSec = guiTab:AddSection("triggerbot ui", "right")
 local guiSizeSec = guiTab:AddSection("size & opacity", "right")
@@ -3265,6 +3325,23 @@ warnaList2[8] = "Cyan"
 warnaList2[9] = "Putih"
 warnaList2[10] = "Hitam"
 warnaList2[11] = "Biru Gelap"
+-- Semua kontrol tampilan window utama dibuat memakai section:AddInput.
+-- Nomor warna yang dipakai adalah nomor BrickColor Roblox, bukan asset ID.
+local defaultUIBrickColor = BrickColor.new(NEVERLOSE.Themes.BlackgroundColor).Number
+local defaultBorderBrickColor = BrickColor.new(NEVERLOSE.Themes.StrokeColor).Number
+guiAppearanceSec:AddInput("nomor warna UI", "contoh: 1004", tostring(defaultUIBrickColor), function(value)
+local ok, message = oxyWindow:SetUIColor(value)
+if not ok then warn("[NEVERLOSE] Warna UI: " .. tostring(message)) end
+end)
+guiAppearanceSec:AddInput("nomor warna border", "contoh: 1003", tostring(defaultBorderBrickColor), function(value)
+local ok, message = oxyWindow:SetBorderColor(value)
+if not ok then warn("[NEVERLOSE] Warna border: " .. tostring(message)) end
+end)
+guiAppearanceSec:AddInput("ketebalan border", "0.5 - 12", "2", function(value)
+local ok, message = oxyWindow:SetBorderThickness(value)
+if not ok then warn("[NEVERLOSE] Ketebalan border: " .. tostring(message)) end
+end)
+
 guiSec:AddDropdown("warna gui asli", warnaList, "Biru Terang", function(v) NEVERLOSE:SetGUIColor(v) end)
 guiSec:AddToggle("rainbow gui asli", false, function(v) NEVERLOSE:SetGUIRainbow(v) end)
 guiSec:AddSlider("opacity gui asli", 0, 90, 0, function(v) NEVERLOSE:SetGUIOpacity(v / 100) end)

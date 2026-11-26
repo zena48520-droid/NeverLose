@@ -2754,10 +2754,9 @@ updateInput(input)
 end
 end
 end)
--- Settings is built in automatically for every window; no extra caller setup required.
-if NEVERLOSE.AddGUISettings then
-    NEVERLOSE:AddGUISettings(WindowFunctinos)
-end
+-- AddWindow hanya membuat window utama.
+-- Tab tambahan (Settings/Appearance) dipasang oleh script pemanggil
+-- setelah AddWindow selesai, melalui NEVERLOSE:AddGUISettings(window).
 return WindowFunctinos
 end
 function NEVERLOSE:KeySystem(TitleName, LinkKey, callback)
@@ -3395,6 +3394,13 @@ end
 end)
 end
 function NEVERLOSE:AddGUISettings(oxyWindow)
+    -- Helper HEX harus berada di scope ini; Color3ToHex lama berada di dalam AddWindow.
+    local function SettingsColor3ToHex(color)
+        return string.format("#%02X%02X%02X",
+            math.floor(color.R * 255 + 0.5),
+            math.floor(color.G * 255 + 0.5),
+            math.floor(color.B * 255 + 0.5))
+    end
     -- Prevent duplicate Settings/Appearance tabs if older loader code also calls this function.
     if oxyWindow._BuiltInSettingsTab then
         return oxyWindow._BuiltInSettingsTab, oxyWindow._BuiltInAppearanceTab
@@ -3427,8 +3433,8 @@ function NEVERLOSE:AddGUISettings(oxyWindow)
     oxyWindow:SetBorderThickness(3)
     oxyWindow:SetWindowShape("Rounded")
 
-    local uiHexResult = settingsMainSec:AddParagraph("HEX UI: " .. Color3ToHex(NEVERLOSE.Themes.BlackgroundColor))
-    local borderHexResult = settingsBorderSec:AddParagraph("HEX Border: " .. Color3ToHex(NEVERLOSE.Themes.StrokeColor))
+    local uiHexResult = settingsMainSec:AddParagraph("HEX UI: " .. SettingsColor3ToHex(NEVERLOSE.Themes.BlackgroundColor))
+    local borderHexResult = settingsBorderSec:AddParagraph("HEX Border: " .. SettingsColor3ToHex(NEVERLOSE.Themes.StrokeColor))
     settingsMainSec:AddParagraph("Ketik nama warna Indonesia/Inggris. HEX dan RGB juga didukung; hasil HEX diperbarui otomatis.")
     settingsMainSec:AddInput("Warna GUI utama", "Midnight Navy / Pastel Blue / Lavender", "Midnight Navy", function(value)
         local ok, result = oxyWindow:SetUIColor(value)

@@ -224,7 +224,7 @@ TextLabel.BorderSizePixel = 0
 TextLabel.Position = UDim2.new(0.243000001, 0, 0.0250000004, 0)
 TextLabel.Size = UDim2.new(0.666889787, 0, 0.0627818182, 0)
 TextLabel.ZIndex = 5
-TextLabel.Font = Enum.Font.SourceSansBold
+TextLabel.Font = Enum.Font.GothamSemibold
 TextLabel.Text = Text or " "
 TextLabel.TextColor3 = NEVERLOSE.Themes.TextColor
 TextLabel.TextScaled = true
@@ -243,10 +243,11 @@ local uptime = 1.4
 if val then
 TabHose.Visible = true
 TabButtons.Visible = true
+LayoutRingTabs()
 Frame_2.Visible = true
 Frame_3.Visible = true
 outlo.Visible = true
-outlo_2.Visible = true
+outlo_2.Visible = false
 outlo_3.Visible = true
 DropShadow.Visible = true
 -- Selalu buka Window utama tepat di tengah layar, bukan di posisi tombol/minimize atau posisi drag sebelumnya.
@@ -257,7 +258,7 @@ TweenService:Create(Frame, TweenInfo.new(uptime, Enum.EasingStyle.Quint), {
 }):Play()
 TweenService:Create(HeadName, TweenInfo.new(uptime / 3, Enum.EasingStyle.Quint), { Size = UDim2.new(0.205458686, 0, 0.133462012, 0), Position = UDim2.new(0.0100000342, 0, 0.010000146, 0) }):Play()
 TweenService:Create(TabHose, TweenInfo.new(0.3), { Position = UDim2.new(0.223, 0, 0.143, 0) }):Play()
-TweenService:Create(TabButtons, TweenInfo.new(0.3), { Position = UDim2.new(0.008, 0, 0.143, 0) }):Play()
+LayoutRingTabs()
 if headd2text then
 TweenService:Create(headd2text, TweenInfo.new(0.3), { TextTransparency = 0, TextStrokeTransparency = 0.900 }):Play()
 end
@@ -282,7 +283,7 @@ outlo_3.Visible = false
 DropShadow.Visible = false
 TweenService:Create(HeadName, TweenInfo.new(uptime / 1.2, Enum.EasingStyle.Quint), { Size = UDim2.new(0.9, 0, 0.5, 0), Position = UDim2.new(0.046, 0, 0.24, 0) }):Play()
 TweenService:Create(TabHose, TweenInfo.new(0.3), { Position = UDim2.new(1.5, 0, 0.143, 0) }):Play()
-TweenService:Create(TabButtons, TweenInfo.new(0.3), { Position = UDim2.new(-1.25, 0, 0.143, 0) }):Play()
+-- Tab overlay disembunyikan saat window diminimize.
 if headd2text then
 TweenService:Create(headd2text, TweenInfo.new(0.3), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
 end
@@ -298,27 +299,79 @@ end
 end
 task.spawn(function()
 local ImageButton = Instance.new("ImageButton")
-ImageButton.Parent = Frame
-ImageButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ImageButton.BackgroundTransparency = 1
+ImageButton.Parent = ScreenGui
+ImageButton.AnchorPoint = Vector2.new(0.5, 0.5)
+ImageButton.ZIndex = 100
+ImageButton.BackgroundColor3 = NEVERLOSE.Themes.BlackColor or Color3.fromRGB(18, 20, 27)
+ImageButton.BackgroundTransparency = 0.10
+ImageButton.AutoButtonColor = false
 ImageButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ImageButton.BorderSizePixel = 0
-ImageButton.Position = UDim2.new(0.908723712, 0, 0.0239103697, 0)
-ImageButton.Size = UDim2.new(0.0900000036, 0, 0.0900000036, 0)
+ImageButton.Position = UDim2.new(0.5, 150, 0.5, -110)
+ImageButton.Size = UDim2.fromOffset(36, 36)
 ImageButton.SizeConstraint = Enum.SizeConstraint.RelativeYY
-ImageButton.ZIndex = 4
+ImageButton.ZIndex = 100
 ImageButton.Image = "rbxassetid://10002398990"
+ImageButton.ImageColor3 = NEVERLOSE.Themes.MainColor
 ImageButton.ScaleType = Enum.ScaleType.Fit
+local MiniCorner = Instance.new("UICorner")
+MiniCorner.Name = "MinimizeCorner"
+MiniCorner.CornerRadius = UDim.new(1, 0)
+MiniCorner.Parent = ImageButton
+local MiniStroke = Instance.new("UIStroke")
+MiniStroke.Name = "MinimizeStroke"
+MiniStroke.Color = NEVERLOSE.Themes.MainColor
+MiniStroke.Thickness = 1.5
+MiniStroke.Transparency = 0.18
+MiniStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+MiniStroke.Parent = ImageButton
+local MiniScale = Instance.new("UIScale")
+MiniScale.Scale = 1
+MiniScale.Parent = ImageButton
+-- Set posisi awal sekali setelah Window memiliki ukuran nyata. Setelah itu posisi tombol tidak disentuh otomatis.
+task.spawn(function()
+    repeat task.wait() until not ImageButton.Parent or Frame.AbsoluteSize.X > 0
+    if ImageButton.Parent and Frame.AbsoluteSize.X > 0 then
+        ImageButton.Position = UDim2.fromOffset(Frame.AbsolutePosition.X + Frame.AbsoluteSize.X * 0.91, Frame.AbsolutePosition.Y + Frame.AbsoluteSize.Y * 0.09)
+    end
+end)
+local miniDragging, miniDragStart, miniStartPos = false, nil, nil
+ImageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        miniDragging = true
+        miniDragStart = input.Position
+        miniStartPos = ImageButton.Position
+    end
+end)
+ImageButton.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        miniDragging = false
+    end
+end)
+InputService.InputChanged:Connect(function(input)
+    if miniDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - miniDragStart
+        ImageButton.Position = UDim2.new(miniStartPos.X.Scale, miniStartPos.X.Offset + delta.X, miniStartPos.Y.Scale, miniStartPos.Y.Offset + delta.Y)
+        if not toggle_valu then
+            local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(800, 600)
+            local miniCenter = ImageButton.AbsolutePosition + ImageButton.AbsoluteSize / 2
+            oldPositionClose = UDim2.new(0, miniCenter.X - Frame.AbsoluteSize.X * 0.5, 0, miniCenter.Y - Frame.AbsoluteSize.Y * 0.5)
+        end
+    end
+end)
 ImageButton.MouseButton1Click:Connect(function()
--- Simpan posisi window saat masih terbuka. Jangan menimpa posisi ini saat restore.
+-- Simpan posisi window utama saja. Posisi tombol minimize adalah independen.
+-- Jangan pindahkan tombol kecil ketika Window dibuka atau ditutup.
 if toggle_valu then
-oldPositionClose = Frame.Position
+    oldPositionClose = Frame.Position
 end
 toggle_valu = not toggle_valu
 if toggle_valu then
-TweenService:Create(ImageButton, TweenInfo.new(0.5), { Size = UDim2.new(0.0900000036, 0, 0.0900000036, 0), Position = UDim2.new(0.908723712, 0, 0.0239103697, 0), AnchorPoint = Vector2.new(0, 0) }):Play()
+TweenService:Create(ImageButton, TweenInfo.new(0.22, Enum.EasingStyle.Quint), { Size = UDim2.fromOffset(36, 36), BackgroundTransparency = 0.10 }):Play()
+    TweenService:Create(MiniStroke, TweenInfo.new(0.22), { Transparency = 0.18, Thickness = 1.5 }):Play()
 else
-TweenService:Create(ImageButton, TweenInfo.new(0.5), { Size = UDim2.new(0.3, 0, 0.3, 0), Position = UDim2.new(1, 0, -0.009, 0), AnchorPoint = Vector2.new(1, 0) }):Play()
+TweenService:Create(ImageButton, TweenInfo.new(0.22, Enum.EasingStyle.Quint), { Size = UDim2.fromOffset(42, 42), BackgroundTransparency = 0.04 }):Play()
+    TweenService:Create(MiniStroke, TweenInfo.new(0.22), { Transparency = 0.04, Thickness = 2 }):Play()
 end
 ui_toggleong(toggle_valu)
 end)
@@ -363,7 +416,7 @@ Frame.Parent = ScreenGui
 Frame.Active = true
 Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 Frame.BackgroundColor3 = NEVERLOSE.Themes.BlackgroundColor
-Frame.BackgroundTransparency = 0.200
+Frame.BackgroundTransparency = 0.08
 Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -376,36 +429,36 @@ UICorner.Parent = Frame
 local WindowBorderStroke = Instance.new("UIStroke")
 WindowBorderStroke.Name = "WindowBorderStroke"
 WindowBorderStroke.Color = NEVERLOSE.Themes.StrokeColor
-WindowBorderStroke.Thickness = 3
-WindowBorderStroke.Transparency = 0
+WindowBorderStroke.Thickness = 1.6
+WindowBorderStroke.Transparency = 0.08
 WindowBorderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 WindowBorderStroke.Parent = Frame
 -- Lapisan glow lembut agar border tetap terlihat pada warna UI gelap maupun terang.
 local WindowBorderGlow = Instance.new("UIStroke")
 WindowBorderGlow.Name = "WindowBorderGlow"
 WindowBorderGlow.Color = NEVERLOSE.Themes.StrokeColor
-WindowBorderGlow.Thickness = 6
-WindowBorderGlow.Transparency = 0.72
+WindowBorderGlow.Thickness = 8
+WindowBorderGlow.Transparency = 0.84
 WindowBorderGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 WindowBorderGlow.Parent = Frame
 Frame_2.Parent = Frame
 Frame_2.BackgroundColor3 = NEVERLOSE.Themes.BlackColor
 Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame_2.BorderSizePixel = 0
-Frame_2.Position = UDim2.new(0.223214373, 0, 0, 0)
-Frame_2.Size = UDim2.new(0.774634778, 0, 1, 0)
+Frame_2.Position = UDim2.new(0, 0, 0, 0)
+Frame_2.Size = UDim2.new(1, 0, 1, 0)
 Frame_2.ZIndex = 2
-UICorner_2.CornerRadius = UDim.new(0, 4)
+UICorner_2.CornerRadius = UDim.new(0, 12)
 UICorner_2.Parent = Frame_2
 Frame_3.Parent = Frame
 Frame_3.BackgroundColor3 = NEVERLOSE.Themes.HeaderColor
-Frame_3.BackgroundTransparency = 0.900
+Frame_3.BackgroundTransparency = 0.82
 Frame_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame_3.BorderSizePixel = 0
-Frame_3.Position = UDim2.new(0.223214373, 0, 0, 0)
-Frame_3.Size = UDim2.new(0.774999976, 0, 0.140000001, 0)
+Frame_3.Position = UDim2.new(0, 0, 0, 0)
+Frame_3.Size = UDim2.new(1, 0, 0.140000001, 0)
 Frame_3.ZIndex = 4
-UICorner_3.CornerRadius = UDim.new(0, 4)
+UICorner_3.CornerRadius = UDim.new(0, 12)
 UICorner_3.Parent = Frame_3
 DropShadow.Name = "DropShadow"
 DropShadow.Parent = Frame
@@ -429,7 +482,7 @@ HeadName.BorderSizePixel = 0
 HeadName.Position = UDim2.new(0.0100000342, 0, 0.010000146, 0)
 HeadName.Size = UDim2.new(0.205458686, 0, 0.133462012, 0)
 HeadName.ZIndex = 4
-HeadName.Font = Enum.Font.SourceSansBold
+HeadName.Font = Enum.Font.GothamBold
 HeadName.Text = NameScriptHub or "NEVERLOSE"
 HeadName.TextColor3 = NEVERLOSE.Themes.TextColor
 HeadName.TextScaled = true
@@ -438,30 +491,111 @@ HeadName.TextStrokeColor3 = NEVERLOSE.Themes.MainColor
 HeadName.TextStrokeTransparency = NEVERLOSE.Themes.HeadNameStrokeTransparency or 0.720
 HeadName.TextWrapped = true
 TabButtons.Name = "TabButtons"
-TabButtons.Parent = Frame
-TabButtons.Active = true
+TabButtons.Parent = ScreenGui
+TabButtons.Active = false
 TabButtons.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TabButtons.BackgroundTransparency = 1
 TabButtons.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TabButtons.BorderSizePixel = 0
-TabButtons.Position = UDim2.new(0.00760957832, 0, 0.143462211, 0)
-TabButtons.Size = UDim2.new(0.20784913, 0, 0.753122032, 0)
+TabButtons.Position = UDim2.new(0, 0, 0, 0)
+TabButtons.Size = UDim2.new(1, 0, 1, 0)
+TabButtons.ClipsDescendants = false
 TabButtons.ZIndex = 5
 TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
 TabButtons.ScrollBarThickness = 1
-UIListLayout.Parent = TabButtons
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 4)
-scrolling_connect(TabButtons)
+UIListLayout:Destroy()
+TabButtons.CanvasSize = UDim2.new(0, 0, 0, 0)
+TabButtons.ScrollBarThickness = 0
+TabButtons.ClipsDescendants = false
+local RingTabButtons = {}
+-- Radius aktif khusus Window utama; posisi Tab dihitung dari nilai ini, bukan dipaksa ke Capsule.
+WindowFunctinos._ActiveShapeRadius = 0
+local function LayoutRingTabs()
+    if not Frame or not Frame.Parent then return end
+    local framePos, frameSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+    local count = #RingTabButtons
+    if count == 0 or frameSize.X <= 0 or frameSize.Y <= 0 then return end
+
+    local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(800, 600)
+    local gap = 9
+    local buttonH = 32
+    local buttonW = math.clamp(math.floor((frameSize.X + frameSize.Y) * 0.12), 88, 112)
+    -- Keep the tab ring proportional to the Window while preventing oversized tabs on phones.
+    if viewport.X < 600 then
+        buttonW = math.clamp(math.floor(viewport.X * 0.19), 68, 92)
+        buttonH = 30
+    end
+    -- Tambah jumlah Tab = lebar Capsule menyesuaikan agar tidak saling menimpa.
+    local perTabSpace = (2 * (frameSize.X + frameSize.Y)) / count - 12
+    buttonW = math.clamp(math.min(buttonW, math.floor(perTabSpace)), 58, buttonW)
+
+    local left = framePos.X - gap - buttonW / 2
+    local right = framePos.X + frameSize.X + gap + buttonW / 2
+    local top = framePos.Y - gap - buttonH / 2
+    local bottom = framePos.Y + frameSize.Y + gap + buttonH / 2
+
+    -- Ikuti radius Window yang benar-benar dipilih:
+    -- Square=0, Rounded=16, Capsule=radius dinamis setengah sisi pendek,
+    -- Soft=24, Smooth=10. Radius lintasan Tab adalah offset dari radius Window.
+    local activeRadius = WindowFunctinos._ActiveShapeRadius
+    local windowCornerRadius
+    if activeRadius == "capsule" then
+        windowCornerRadius = math.min(frameSize.X, frameSize.Y) / 2
+    else
+        windowCornerRadius = tonumber(activeRadius) or 0
+    end
+    local corner = windowCornerRadius + gap + buttonH / 2
+    corner = math.clamp(corner, 0, math.min((right-left)/2, (bottom-top)/2))
+
+    local r = corner
+    local straightTop = math.max(0, right - left - 2*r)
+    local straightSide = math.max(0, bottom - top - 2*r)
+    local arc = math.pi * r / 2
+    local segments = {
+        {length=straightTop, point=function(d) return left+r+d, top end},
+        {length=arc, point=function(d) local a=-math.pi/2+d/r; return right-r+math.cos(a)*r, top+r+math.sin(a)*r end},
+        {length=straightSide, point=function(d) return right, top+r+d end},
+        {length=arc, point=function(d) local a=d/r; return right-r+math.cos(a)*r, bottom-r+math.sin(a)*r end},
+        {length=straightTop, point=function(d) return right-r-d, bottom end},
+        {length=arc, point=function(d) local a=math.pi/2+d/r; return left+r+math.cos(a)*r, bottom-r+math.sin(a)*r end},
+        {length=straightSide, point=function(d) return left, bottom-r-d end},
+        {length=arc, point=function(d) local a=math.pi+d/r; return left+r+math.cos(a)*r, top+r+math.sin(a)*r end},
+    }
+    local perimeter = 0
+    for _, segment in ipairs(segments) do perimeter += segment.length end
+    if perimeter <= 0 then return end
+
+    for i, button in ipairs(RingTabButtons) do
+        if button and button.Parent then
+            local distance = ((i - 1) / count) * perimeter
+            local x, y = left + r, top
+            for _, segment in ipairs(segments) do
+                if segment.length > 0 and distance <= segment.length then
+                    x, y = segment.point(distance)
+                    break
+                end
+                distance -= segment.length
+            end
+            button.AnchorPoint = Vector2.new(0.5, 0.5)
+            button.Position = UDim2.fromOffset(math.floor(x + 0.5), math.floor(y + 0.5))
+            button.Size = UDim2.fromOffset(buttonW, buttonH)
+            button.Visible = toggle_valu
+        end
+    end
+end
+Frame:GetPropertyChangedSignal("AbsolutePosition"):Connect(LayoutRingTabs)
+Frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(LayoutRingTabs)
+if workspace.CurrentCamera then
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(LayoutRingTabs)
+end
 TabHose.Name = "TabHose"
 TabHose.Parent = Frame
 TabHose.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TabHose.BackgroundTransparency = 1
 TabHose.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TabHose.BorderSizePixel = 0
-TabHose.Position = UDim2.new(0.223214373, 0, 0.143462211, 0)
-TabHose.Size = UDim2.new(0.774635077, 0, 0.856537759, 0)
+TabHose.Position = UDim2.new(0.025, 0, 0.155, 0)
+TabHose.Size = UDim2.new(0.95, 0, 0.82, 0)
 TabHose.ZIndex = 5
 outlo.Name = "outlo"
 outlo.Parent = Frame
@@ -482,7 +616,7 @@ outlo_2.BackgroundColor3 = NEVERLOSE.Themes.TraceColor
 outlo_2.BackgroundTransparency = 0.700
 outlo_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 outlo_2.BorderSizePixel = 0
-outlo_2.Position = UDim2.new(0.223908007, 0, 0.5, 0)
+outlo_2.Position = UDim2.new(0, 0, 0.5, 0)
 outlo_2.Size = UDim2.new(0, 1, 1, 0)
 outlo_2.ZIndex = 4
 UICorner_5.CornerRadius = UDim.new(0, 4)
@@ -494,8 +628,8 @@ outlo_3.BackgroundColor3 = NEVERLOSE.Themes.TraceColor
 outlo_3.BackgroundTransparency = 0.700
 outlo_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
 outlo_3.BorderSizePixel = 0
-outlo_3.Position = UDim2.new(0.223908007, 0, 0.923109949, 0)
-outlo_3.Size = UDim2.new(0.223908007, 0, 0, 1)
+outlo_3.Position = UDim2.new(0.02, 0, 0.923109949, 0)
+outlo_3.Size = UDim2.new(0.96, 0, 0, 1)
 outlo_3.ZIndex = 4
 UICorner_6.CornerRadius = UDim.new(0, 4)
 UICorner_6.Parent = outlo_3
@@ -534,7 +668,7 @@ UserName.BorderSizePixel = 0
 UserName.Position = UDim2.new(0.31400001, 0, 0.5, 0)
 UserName.Size = UDim2.new(0.717000008, 0, 0.649999976, 0)
 UserName.ZIndex = 5
-UserName.Font = Enum.Font.SourceSansSemibold
+UserName.Font = Enum.Font.GothamMedium
 UserName.Text = LocalPlayer.DisplayName or "https://httpbin.org/get"
 UserName.TextColor3 = NEVERLOSE.Themes.TextColor
 UserName.TextScaled = true
@@ -552,7 +686,7 @@ TabTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TabTitle.BorderSizePixel = 0
 TabTitle.Size = UDim2.new(0.949999988, 0, 0.5, 0)
 TabTitle.ZIndex = 5
-TabTitle.Font = Enum.Font.SourceSansSemibold
+TabTitle.Font = Enum.Font.GothamMedium
 TabTitle.Text = Label or "Home"
 TabTitle.TextColor3 = NEVERLOSE.Themes.TextColor
 TabTitle.TextScaled = true
@@ -589,20 +723,18 @@ TabButton.Name = "TabButton"
 TabButton.LayoutOrder = (tostring(TabNameString) == "Settings") and -1000 or 0
 TabButton.Parent = TabButtons
 TabButton.BackgroundColor3 = cc
-TabButton.BackgroundTransparency = 1
+TabButton.BackgroundTransparency = 0.12
 TabButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TabButton.BorderSizePixel = 0
-TabButton.Size = UDim2.new(0.899999976, 0, 0.5, 0)
-TabButton.ZIndex = 5
-UIAspectRatioConstraint.Parent = TabButton
-UIAspectRatioConstraint.AspectRatio = 4
-UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 9)
+TabButton.Size = UDim2.fromOffset(112, 34)
+TabButton.ZIndex = 50
+UIAspectRatioConstraint:Destroy()
+UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = TabButton
 TabStroke.Name = "TabAccentStroke"
 TabStroke.Color = NEVERLOSE.Themes.MainColor
-TabStroke.Thickness = 1.15
-TabStroke.Transparency = 0.78
+TabStroke.Thickness = 1.35
+TabStroke.Transparency = 0.48
 TabStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 TabStroke.Parent = TabButton
 Image.Name = "Image"
@@ -612,10 +744,10 @@ Image.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Image.BackgroundTransparency = 1
 Image.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Image.BorderSizePixel = 0
-Image.Position = UDim2.new(0.0149999997, 0, 0.5, 0)
-Image.Size = UDim2.new(0.850000024, 0, 0.800000012, 0)
+Image.Position = UDim2.new(0, 9, 0.5, 0)
+Image.Size = UDim2.fromOffset(18, 18)
 Image.SizeConstraint = Enum.SizeConstraint.RelativeYY
-Image.ZIndex = 5
+Image.ZIndex = 51
 Image.ImageColor3 = NEVERLOSE.Themes.MainColor
 Image.ImageRectOffset = Vector2.new(205, 565)
 Image.ImageRectSize = Vector2.new(35, 35)
@@ -629,17 +761,17 @@ Label.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Label.BackgroundTransparency = 1
 Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
-Label.Position = UDim2.new(0.640507042, 0, 0.500000238, 0)
-Label.Size = UDim2.new(0.718986034, 0, 0.600000024, 0)
-Label.ZIndex = 5
-Label.Font = Enum.Font.SourceSansBold
+Label.Position = UDim2.new(0, 34, 0.5, 0)
+Label.Size = UDim2.new(1, -43, 0.72, 0)
+Label.ZIndex = 51
+Label.Font = Enum.Font.GothamSemibold
 Label.Text = TabNameString or "Index.json"
 Label.TextColor3 = NEVERLOSE.Themes.TextColor
 Label.TextScaled = true
 Label.TextSize = 14
 Label.TextWrapped = true
 Label.TextXAlignment = Enum.TextXAlignment.Left
-Label.TextYAlignment = Enum.TextYAlignment.Top
+Label.TextYAlignment = Enum.TextYAlignment.Center
 local Tab = Instance.new("Frame")
 local Left = Instance.new("ScrollingFrame")
 local UIListLayout = Instance.new("UIListLayout")
@@ -727,6 +859,8 @@ else
 tabcall(false, 0)
 end
 table.insert(Tabs, { Tab, tabcall })
+table.insert(RingTabButtons, TabButton)
+task.defer(LayoutRingTabs)
 if tostring(TabNameString) == "Settings" then
 for _, existingTab in ipairs(Tabs) do
 if existingTab[1] ~= Tab then existingTab[2](false, 0) end
@@ -759,7 +893,7 @@ Section.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Section.BorderSizePixel = 0
 Section.Size = UDim2.new(0.970000029, 0, 0, 0)
 Section.ZIndex = 5
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Section
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
 UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -774,7 +908,7 @@ Header.BorderSizePixel = 0
 Header.Position = UDim2.new(0.5, 0, 0.100000001, 0)
 Header.Size = UDim2.new(0.949999988, 0, 0, 15)
 Header.ZIndex = 5
-Header.Font = Enum.Font.SourceSansSemibold
+Header.Font = Enum.Font.GothamMedium
 Header.Text = SectionName or "Section"
 Header.TextColor3 = NEVERLOSE.Themes.TextColor
 Header.TextScaled = true
@@ -801,7 +935,7 @@ TweenService:Create(lay, TweenInfo.new(1), { BackgroundTransparency = 0 }):Play(
 TweenService:Create(Section, TweenInfo.new(1), { BackgroundTransparency = 0 }):Play()
 TweenService:Create(UIStroke, TweenInfo.new(1), { Transparency = 0 }):Play()
 local section_value = true
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 8)
 UICorner_2.Parent = lay
 local function update_section_size(va)
 if not va then
@@ -858,7 +992,7 @@ Button.ZIndex = 5
 UIAspectRatioConstraint.Parent = Button
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Button
 LabelText.Name = "LabelText"
 LabelText.Parent = Button
@@ -870,7 +1004,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.5, 0, 0.5, 0)
 LabelText.Size = UDim2.new(0.899999976, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = ButtonName or "Kill all"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -916,7 +1050,7 @@ Label.ZIndex = 5
 UIAspectRatioConstraint.Parent = Label
 UIAspectRatioConstraint.AspectRatio = 6
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Label
 LabelText.Name = "LabelText"
 LabelText.Parent = Label
@@ -928,7 +1062,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.5, 0, 0.5, 0)
 LabelText.Size = UDim2.new(1, 0, 0.649999976, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = LabelNameString or "Label"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -982,7 +1116,7 @@ Toggle.ZIndex = 5
 UIAspectRatioConstraint.Parent = Toggle
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Toggle
 LabelText.Name = "LabelText"
 LabelText.Parent = Toggle
@@ -994,7 +1128,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.38587454, 0, 0.499999583, 0)
 LabelText.Size = UDim2.new(0.772000015, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = ToggleName or "Label-Test"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -1095,7 +1229,7 @@ Keybind.ZIndex = 5
 UIAspectRatioConstraint.Parent = Keybind
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Keybind
 LabelText.Name = "LabelText"
 LabelText.Parent = Keybind
@@ -1107,7 +1241,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.296665907, 0, 0.499999106, 0)
 LabelText.Size = UDim2.new(0.593582749, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = KeybindNameString or ""
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -1125,7 +1259,7 @@ BrindText.BorderSizePixel = 0
 BrindText.Position = UDim2.new(0.998, 0, 0.5, 0)
 BrindText.Size = UDim2.new(0.150000006, 0, 0.5, 0)
 BrindText.ZIndex = 6
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 8)
 UICorner_2.Parent = BrindText
 UIStroke.Thickness = 0.500
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
@@ -1141,7 +1275,7 @@ ValueText.BorderSizePixel = 0
 ValueText.Position = UDim2.new(0.5, 0, 0.5, 0)
 ValueText.Size = UDim2.new(0.980000019, 0, 0.998000026, 0)
 ValueText.ZIndex = 6
-ValueText.Font = Enum.Font.SourceSansSemibold
+ValueText.Font = Enum.Font.GothamMedium
 ValueText.Text = gt(Default)
 ValueText.TextColor3 = NEVERLOSE.Themes.TextColor
 ValueText.TextScaled = true
@@ -1234,7 +1368,7 @@ Slider.ZIndex = 5
 UIAspectRatioConstraint.Parent = Slider
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Slider
 LabelText.Name = "LabelText"
 LabelText.Parent = Slider
@@ -1246,7 +1380,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.238462642, 0, 0.499999374, 0)
 LabelText.Size = UDim2.new(0.477176398, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = SliderNameString or "Control"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -1264,7 +1398,7 @@ Box.BorderSizePixel = 0
 Box.Position = UDim2.new(0.800000012, 0, 0.5, 0)
 Box.Size = UDim2.new(0.150000006, 0, 0.5, 0)
 Box.ZIndex = 6
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 8)
 UICorner_2.Parent = Box
 UIStroke.Thickness = 0.500
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
@@ -1280,7 +1414,7 @@ ValueText.BorderSizePixel = 0
 ValueText.Position = UDim2.new(0.5, 0, 0.5, 0)
 ValueText.Size = UDim2.new(0.99000001, 0, 0.99000001, 0)
 ValueText.ZIndex = 6
-ValueText.Font = Enum.Font.SourceSansSemibold
+ValueText.Font = Enum.Font.GothamMedium
 ValueText.Text = tostring(Default)
 ValueText.TextColor3 = NEVERLOSE.Themes.TextColor
 ValueText.TextScaled = true
@@ -1296,7 +1430,7 @@ MoveFrame.ClipsDescendants = true
 MoveFrame.Position = UDim2.new(0.477050841, 0, 0.50000006, 0)
 MoveFrame.Size = UDim2.new(0.290949076, 0, 0.099999994, 0)
 MoveFrame.ZIndex = 5
-UICorner_3.CornerRadius = UDim.new(0, 3)
+UICorner_3.CornerRadius = UDim.new(0, 8)
 UICorner_3.Parent = MoveFrame
 Inline.Name = "Inline"
 Inline.Parent = MoveFrame
@@ -1401,7 +1535,7 @@ Dropdown.ZIndex = 5
 UIAspectRatioConstraint.Parent = Dropdown
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Dropdown
 LabelText.Name = "LabelText"
 LabelText.Parent = Dropdown
@@ -1413,7 +1547,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.296666116, 0, 0.499999374, 0)
 LabelText.Size = UDim2.new(0.593582511, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = DropdownName or "Label-Test"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -1431,7 +1565,7 @@ TopBar.BorderSizePixel = 0
 TopBar.Position = UDim2.new(0.950000167, 0, 0.500000715, 0)
 TopBar.Size = UDim2.new(0.313529521, 0, 0.5, 0)
 TopBar.ZIndex = 6
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 8)
 UICorner_2.Parent = TopBar
 UIStroke.Thickness = 0.500
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
@@ -1447,7 +1581,7 @@ ValueText.BorderSizePixel = 0
 ValueText.Position = UDim2.new(0.358571023, 0, 0.500001013, 0)
 ValueText.Size = UDim2.new(0.697142839, 0, 0.998000145, 0)
 ValueText.ZIndex = 6
-ValueText.Font = Enum.Font.SourceSansSemibold
+ValueText.Font = Enum.Font.GothamMedium
 ValueText.Text = tostring(Default)
 ValueText.TextColor3 = NEVERLOSE.Themes.TextColor
 ValueText.TextScaled = true
@@ -1465,7 +1599,7 @@ Icon.Rotation = 90
 Icon.Size = UDim2.new(0.949999988, 0, 0.949999988, 0)
 Icon.SizeConstraint = Enum.SizeConstraint.RelativeYY
 Icon.ZIndex = 6
-Icon.Font = Enum.Font.SourceSans
+Icon.Font = Enum.Font.Gotham
 Icon.Text = "<"
 Icon.TextColor3 = NEVERLOSE.Themes.TextColor
 Icon.TextScaled = true
@@ -1483,7 +1617,7 @@ DownBar.Position = UDim2.new(0.948214233, 0, 0.873961239, 0)
 DownBar.Size = UDim2.new(0.308999985, 0, 0, 0)
 DownBar.Visible = false
 DownBar.ZIndex = 10
-UICorner_3.CornerRadius = UDim.new(0, 3)
+UICorner_3.CornerRadius = UDim.new(0, 8)
 UICorner_3.Parent = DownBar
 UIStroke_2.Thickness = 0.500
 UIStroke_2.Color = NEVERLOSE.Themes.StrokeColor
@@ -1569,7 +1703,7 @@ Dropdown.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Dropdown.BorderSizePixel = 0
 Dropdown.Size = UDim2.new(0.99000001, 0, 0.5, 0)
 Dropdown.ZIndex = 1000
-Dropdown.Font = Enum.Font.SourceSansSemibold
+Dropdown.Font = Enum.Font.GothamMedium
 Dropdown.Text = "List"
 Dropdown.TextColor3 = NEVERLOSE.Themes.TextColor
 Dropdown.TextScaled = true
@@ -1663,7 +1797,7 @@ InputFrame.ZIndex = 5
 UIAspectRatioConstraint.Parent = InputFrame
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = InputFrame
 LabelText.Name = "LabelText"
 LabelText.Parent = InputFrame
@@ -1675,7 +1809,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.296666116, 0, 0.499999374, 0)
 LabelText.Size = UDim2.new(0.593582511, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = InputName or "Input"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -1693,7 +1827,7 @@ Box.BorderSizePixel = 0
 Box.Position = UDim2.new(0.950000167, 0, 0.500000715, 0)
 Box.Size = UDim2.new(0.313529521, 0, 0.5, 0)
 Box.ZIndex = 6
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 8)
 UICorner_2.Parent = Box
 UIStroke.Thickness = 0.500
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
@@ -1709,7 +1843,7 @@ TextBox.BorderSizePixel = 0
 TextBox.Position = UDim2.new(0.5, 0, 0.5, 0)
 TextBox.Size = UDim2.new(0.980000019, 0, 0.998000026, 0)
 TextBox.ZIndex = 6
-TextBox.Font = Enum.Font.SourceSansSemibold
+TextBox.Font = Enum.Font.GothamMedium
 TextBox.PlaceholderText = tostring(Placeholder)
 TextBox.Text = tostring(Default)
 TextBox.TextColor3 = NEVERLOSE.Themes.TextColor
@@ -1865,7 +1999,7 @@ Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
 Label.Size = UDim2.new(0.899999976, 0, 0, 40)
 Label.ZIndex = 5
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Label
 LabelText.Name = "LabelText"
 LabelText.Parent = Label
@@ -1877,7 +2011,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.5, 0, 0.5, 0)
 LabelText.Size = UDim2.new(1, 0, 1, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = TextString or ""
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = false
@@ -1914,7 +2048,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.5, 0, 0.5, 0)
 LabelText.Size = UDim2.new(1, 0, 1, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansBold
+LabelText.Font = Enum.Font.GothamBold
 LabelText.Text = TitleString or ""
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -1983,7 +2117,7 @@ Frame.ZIndex = 5
 UIAspectRatioConstraint.Parent = Frame
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Frame
 LabelText.Name = "LabelText"
 LabelText.Parent = Frame
@@ -1995,7 +2129,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.296666116, 0, 0.499999374, 0)
 LabelText.Size = UDim2.new(0.593582511, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = ColorName or "Color"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -2067,7 +2201,7 @@ Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.Size = UDim2.new(0.899999976, 0, 0, 60)
 Frame.ZIndex = 5
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Frame
 LabelText.Name = "LabelText"
 LabelText.Parent = Frame
@@ -2079,7 +2213,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.02, 0, 0, 0)
 LabelText.Size = UDim2.new(0.96, 0, 0, 18)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = SearchName or "Search"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -2097,7 +2231,7 @@ Box.BorderSizePixel = 0
 Box.Position = UDim2.new(0.02, 0, 0, 20)
 Box.Size = UDim2.new(0.96, 0, 0, 20)
 Box.ZIndex = 6
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 8)
 UICorner_2.Parent = Box
 UIStroke.Thickness = 0.500
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
@@ -2113,7 +2247,7 @@ TextBox.BorderSizePixel = 0
 TextBox.Position = UDim2.new(0.5, 0, 0.5, 0)
 TextBox.Size = UDim2.new(0.98, 0, 0.98, 0)
 TextBox.ZIndex = 6
-TextBox.Font = Enum.Font.SourceSansSemibold
+TextBox.Font = Enum.Font.GothamMedium
 TextBox.PlaceholderText = tostring(Placeholder or "cari...")
 TextBox.Text = chosen
 TextBox.TextColor3 = NEVERLOSE.Themes.TextColor
@@ -2158,7 +2292,7 @@ btn.BackgroundTransparency = 1
 btn.BorderSizePixel = 0
 btn.Size = UDim2.new(0.98, 0, 0, 18)
 btn.ZIndex = 11
-btn.Font = Enum.Font.SourceSansSemibold
+btn.Font = Enum.Font.GothamMedium
 btn.Text = item
 btn.TextColor3 = NEVERLOSE.Themes.TextColor
 btn.TextScaled = true
@@ -2259,7 +2393,7 @@ Frame.ZIndex = 5
 UIAspectRatioConstraint.Parent = Frame
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Frame
 LabelText.Name = "LabelText"
 LabelText.Parent = Frame
@@ -2271,7 +2405,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.296666116, 0, 0.499999374, 0)
 LabelText.Size = UDim2.new(0.593582511, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = CycleName or "Cycle"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -2289,7 +2423,7 @@ ValueText.BorderSizePixel = 0
 ValueText.Position = UDim2.new(0.75, 0, 0.5, 0)
 ValueText.Size = UDim2.new(0.45, 0, 0.75, 0)
 ValueText.ZIndex = 6
-ValueText.Font = Enum.Font.SourceSansSemibold
+ValueText.Font = Enum.Font.GothamMedium
 ValueText.Text = cur
 ValueText.TextColor3 = NEVERLOSE.Themes.MainColor
 ValueText.TextScaled = true
@@ -2358,7 +2492,7 @@ Frame.ZIndex = 5
 UIAspectRatioConstraint.Parent = Frame
 UIAspectRatioConstraint.AspectRatio = 7
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Frame
 LabelText.Name = "LabelText"
 LabelText.Parent = Frame
@@ -2370,7 +2504,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.238462642, 0, 0.499999374, 0)
 LabelText.Size = UDim2.new(0.477176398, 0, 0.75, 0)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = BarName or "Progress"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -2387,7 +2521,7 @@ Track.BorderSizePixel = 0
 Track.Position = UDim2.new(0.477050841, 0, 0.50000006, 0)
 Track.Size = UDim2.new(0.290949076, 0, 0.15, 0)
 Track.ZIndex = 5
-UICorner_2.CornerRadius = UDim.new(0, 3)
+UICorner_2.CornerRadius = UDim.new(0, 8)
 UICorner_2.Parent = Track
 Fill.Name = "Fill"
 Fill.Parent = Track
@@ -2398,7 +2532,7 @@ Fill.BorderSizePixel = 0
 Fill.Position = UDim2.new(0, 0, 0.5, 0)
 Fill.Size = UDim2.new(math.clamp(Default / 100, 0, 1), 0, 1, 0)
 Fill.ZIndex = 5
-UICorner_3.CornerRadius = UDim.new(0, 3)
+UICorner_3.CornerRadius = UDim.new(0, 8)
 UICorner_3.Parent = Fill
 ValueText.Name = "ValueText"
 ValueText.Parent = Frame
@@ -2410,7 +2544,7 @@ ValueText.BorderSizePixel = 0
 ValueText.Position = UDim2.new(0.88, 0, 0.5, 0)
 ValueText.Size = UDim2.new(0.15, 0, 0.75, 0)
 ValueText.ZIndex = 6
-ValueText.Font = Enum.Font.SourceSansSemibold
+ValueText.Font = Enum.Font.GothamMedium
 ValueText.Text = tostring(math.floor(Default + 0.5)) .. "%"
 ValueText.TextColor3 = NEVERLOSE.Themes.TextColor
 ValueText.TextScaled = true
@@ -2501,7 +2635,7 @@ Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.Size = UDim2.new(0.899999976, 0, 0, 32)
 Frame.ZIndex = 5
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Frame
 LabelText.Name = "LabelText"
 LabelText.Parent = Frame
@@ -2513,7 +2647,7 @@ LabelText.BorderSizePixel = 0
 LabelText.Position = UDim2.new(0.02, 0, 0, 0)
 LabelText.Size = UDim2.new(0.96, 0, 0, 18)
 LabelText.ZIndex = 6
-LabelText.Font = Enum.Font.SourceSansSemibold
+LabelText.Font = Enum.Font.GothamMedium
 LabelText.Text = DropdownName or "Multi"
 LabelText.TextColor3 = NEVERLOSE.Themes.TextColor
 LabelText.TextScaled = true
@@ -2531,7 +2665,7 @@ ValueText.BorderSizePixel = 0
 ValueText.Position = UDim2.new(0.02, 0, 0, 18)
 ValueText.Size = UDim2.new(0.96, 0, 0, 14)
 ValueText.ZIndex = 6
-ValueText.Font = Enum.Font.SourceSansSemibold
+ValueText.Font = Enum.Font.GothamMedium
 ValueText.Text = getText()
 ValueText.TextColor3 = NEVERLOSE.Themes.MainColor
 ValueText.TextScaled = true
@@ -2563,7 +2697,7 @@ btn.BackgroundTransparency = 1
 btn.BorderSizePixel = 0
 btn.Size = UDim2.new(0.98, 0, 0, 20)
 btn.ZIndex = 11
-btn.Font = Enum.Font.SourceSansSemibold
+btn.Font = Enum.Font.GothamMedium
 btn.Text = (selected[item] and "[x] " or "[ ] ") .. item
 btn.TextColor3 = NEVERLOSE.Themes.TextColor
 btn.TextScaled = true
@@ -2714,67 +2848,72 @@ function WindowFunctinos:SetBorderThickness(thickness)
 end
 
 function WindowFunctinos:SetWindowShape(shapeName)
-    local key = tostring(shapeName or ""):lower():gsub("%s+", "")
+    local key = tostring(shapeName or ""):lower():gsub("[%s_%-]+", "")
     local radius
     if key == "square" or key == "kotak" then radius = 0
     elseif key == "rounded" or key == "roundedcorner" or key == "membulat" then radius = 16
-    elseif key == "capsule" or key == "pill" then radius = 0.5
+    elseif key == "capsule" or key == "pill" then radius = "capsule"
     elseif key == "soft" or key == "softrounded" then radius = 24
     elseif key == "smooth" then radius = 10
     else return false, "Pilih Square, Rounded, Capsule, Soft, atau Smooth" end
 
-    -- Terapkan bentuk ke seluruh permukaan GUI, termasuk Tab, Section,
-    -- panel, header, dan komponen yang sudah dibuat maupun dibuat kemudian.
-    local function applyShape(root)
-        for _, object in ipairs(root:GetDescendants()) do
-            if object:IsA("UICorner") then
-                local parent = object.Parent
-                if parent and parent:IsA("GuiObject") then
-                    -- Pertahankan elemen yang memang berbentuk lingkaran.
-                    local original = object:GetAttribute("NeverloseCircle")
-                    if original == nil then
-                        original = object.CornerRadius.Scale >= 0.45
-                        object:SetAttribute("NeverloseCircle", original)
-                    end
-                    if not original then
-                        if radius == 0.5 then
-                            object.CornerRadius = UDim.new(0, math.floor(math.min(parent.AbsoluteSize.X, parent.AbsoluteSize.Y) / 2))
-                        else
-                            object.CornerRadius = UDim.new(0, radius)
-                        end
-                    end
+    -- Semua elemen dalam ScreenGui ikut diatur, termasuk Tab overlay dan tombol Minimize.
+    -- Elemen lingkaran asli (misalnya avatar/icon bulat) tetap dipertahankan.
+    local function isTrueCircle(corner)
+        local parent = corner.Parent
+        if not parent or not parent:IsA("GuiObject") then return false end
+        local marked = corner:GetAttribute("NeverloseCircle")
+        if marked ~= nil then return marked end
+        local wasRound = corner.CornerRadius.Scale >= 0.45
+        local size = parent.AbsoluteSize
+        local squareLike = size.X > 0 and size.Y > 0 and math.abs(size.X - size.Y) <= math.max(size.X, size.Y) * 0.12
+        local circle = wasRound and squareLike
+        corner:SetAttribute("NeverloseCircle", circle)
+        return circle
+    end
+
+    local function applyCorner(corner)
+        if not corner:IsA("UICorner") or isTrueCircle(corner) then return end
+        local parent = corner.Parent
+        if not parent or not parent:IsA("GuiObject") then return end
+        if radius == "capsule" then
+            local function updateCapsule()
+                if corner.Parent == parent then
+                    local size = parent.AbsoluteSize
+                    local half = math.floor(math.min(size.X, size.Y) / 2)
+                    corner.CornerRadius = UDim.new(0, half)
                 end
             end
+            updateCapsule()
+            if not corner:GetAttribute("NeverloseCapsuleWatcher") then
+                corner:SetAttribute("NeverloseCapsuleWatcher", true)
+                parent:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateCapsule)
+            end
+        else
+            corner.CornerRadius = UDim.new(0, radius)
         end
     end
 
-    applyShape(Frame)
-    -- Tab/Section baru yang ditambahkan setelah perubahan ikut memakai bentuk aktif.
+    for _, object in ipairs(ScreenGui:GetDescendants()) do
+        if object:IsA("UICorner") then applyCorner(object) end
+    end
+
+    WindowFunctinos._ActiveShapeRadius = radius
+    -- Re-layout the ring immediately so Tab centers follow the newly selected Window contour.
+    if LayoutRingTabs then
+        LayoutRingTabs()
+        task.defer(LayoutRingTabs)
+    end
     if not WindowFunctinos._ShapeWatcher then
-        WindowFunctinos._ShapeWatcher = Frame.DescendantAdded:Connect(function(object)
+        WindowFunctinos._ShapeWatcher = ScreenGui.DescendantAdded:Connect(function(object)
             if object:IsA("UICorner") then
                 task.defer(function()
-                    if object.Parent and object.Parent:IsA("GuiObject") then
-                        local original = object:GetAttribute("NeverloseCircle")
-                        if original == nil then
-                            original = object.CornerRadius.Scale >= 0.45
-                            object:SetAttribute("NeverloseCircle", original)
-                        end
-                        if not original then
-                            local current = WindowFunctinos._ActiveShapeRadius or 16
-                            if current == 0.5 then
-                                object.CornerRadius = UDim.new(0, math.floor(math.min(object.Parent.AbsoluteSize.X, object.Parent.AbsoluteSize.Y) / 2))
-                            else
-                                object.CornerRadius = UDim.new(0, current)
-                            end
-                        end
-                    end
+                    if object.Parent then applyCorner(object) end
                 end)
             end
         end)
     end
-    WindowFunctinos._ActiveShapeRadius = radius
-    return true, shapeName
+    return true, tostring(shapeName)
 end
 
 function WindowFunctinos:Delete()
@@ -2861,7 +3000,7 @@ Title.BorderSizePixel = 0
 Title.Position = UDim2.new(0.5, 0, 0.143000007, 0)
 Title.Size = UDim2.new(0.899999976, 0, 0.150000006, 0)
 Title.ZIndex = 4
-Title.Font = Enum.Font.SourceSansBold
+Title.Font = Enum.Font.GothamBold
 Title.Text = TitleName or "Key System"
 Title.TextColor3 = NEVERLOSE.Themes.TextColor
 Title.TextScaled = true
@@ -2879,7 +3018,7 @@ PasteKey.Position = UDim2.new(0.50000006, 0, 0.373641312, 0)
 PasteKey.Size = UDim2.new(0.899999976, 0, 0.25, 0)
 PasteKey.ZIndex = 4
 PasteKey.ClearTextOnFocus = false
-PasteKey.Font = Enum.Font.SourceSansSemibold
+PasteKey.Font = Enum.Font.GothamMedium
 PasteKey.Text = ""
 PasteKey.TextColor3 = NEVERLOSE.Themes.TextColor
 PasteKey.TextScaled = true
@@ -2889,7 +3028,7 @@ PasteKey.TextWrapped = true
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
 UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 UIStroke.Parent = PasteKey
-UICorner_3.CornerRadius = UDim.new(0, 3)
+UICorner_3.CornerRadius = UDim.new(0, 8)
 UICorner_3.Parent = PasteKey
 CopyKey.Name = "CopyKey"
 CopyKey.Parent = Frame
@@ -2900,7 +3039,7 @@ CopyKey.BorderSizePixel = 0
 CopyKey.Position = UDim2.new(0.0489396416, 0, 0.754076123, 0)
 CopyKey.Size = UDim2.new(0.42039147, 0, 0.182608709, 0)
 CopyKey.ZIndex = 5
-CopyKey.Font = Enum.Font.SourceSansBold
+CopyKey.Font = Enum.Font.GothamBold
 CopyKey.Text = "Get Key"
 CopyKey.TextColor3 = NEVERLOSE.Themes.TextColor
 CopyKey.TextScaled = true
@@ -2922,7 +3061,7 @@ Submit.BorderSizePixel = 0
 Submit.Position = UDim2.new(0.517944396, 0, 0.754076123, 0)
 Submit.Size = UDim2.new(0.428548098, 0, 0.182608709, 0)
 Submit.ZIndex = 5
-Submit.Font = Enum.Font.SourceSansBold
+Submit.Font = Enum.Font.GothamBold
 Submit.Text = "Submit"
 Submit.TextColor3 = NEVERLOSE.Themes.TextColor
 Submit.TextScaled = true
@@ -3052,7 +3191,7 @@ Notify.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Notify.BorderSizePixel = 0
 Notify.ClipsDescendants = true
 Notify.Size = UDim2.new(0.75, 0, 0, 0)
-UICorner.CornerRadius = UDim.new(0, 3)
+UICorner.CornerRadius = UDim.new(0, 8)
 UICorner.Parent = Notify
 UIStroke.Color = NEVERLOSE.Themes.StrokeColor
 UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -3080,7 +3219,7 @@ HeadTitle.BorderSizePixel = 0
 HeadTitle.Position = UDim2.new(0.130612239, 0, 0.0750002638, 0)
 HeadTitle.Size = UDim2.new(0.738775492, 0, 0.369384199, 0)
 HeadTitle.ZIndex = 7
-HeadTitle.Font = Enum.Font.SourceSansSemibold
+HeadTitle.Font = Enum.Font.GothamMedium
 HeadTitle.Text = Head or "Head"
 HeadTitle.TextColor3 = NEVERLOSE.Themes.TextColor
 HeadTitle.TextScaled = true
@@ -3097,7 +3236,7 @@ BodyTitle.BorderSizePixel = 0
 BodyTitle.Position = UDim2.new(0.130612239, 0, 0.444384605, 0)
 BodyTitle.Size = UDim2.new(0.738775492, 0, 0.47554332, 0)
 BodyTitle.ZIndex = 7
-BodyTitle.Font = Enum.Font.SourceSansSemibold
+BodyTitle.Font = Enum.Font.GothamMedium
 BodyTitle.Text = Body or "Body"
 BodyTitle.TextColor3 = NEVERLOSE.Themes.TextColor
 BodyTitle.TextScaled = true

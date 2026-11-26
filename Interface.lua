@@ -249,7 +249,12 @@ outlo.Visible = true
 outlo_2.Visible = true
 outlo_3.Visible = true
 DropShadow.Visible = true
-TweenService:Create(Frame, TweenInfo.new(uptime, Enum.EasingStyle.Quint), { Size = ooldsize, Position = oldPositionClose or UDim2.new(0.5, 0, 0.5, 0) }):Play()
+-- Selalu buka Window utama tepat di tengah layar, bukan di posisi tombol/minimize atau posisi drag sebelumnya.
+Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+TweenService:Create(Frame, TweenInfo.new(uptime, Enum.EasingStyle.Quint), {
+    Size = ooldsize,
+    Position = UDim2.new(0.5, 0, 0.5, 0)
+}):Play()
 TweenService:Create(HeadName, TweenInfo.new(uptime / 3, Enum.EasingStyle.Quint), { Size = UDim2.new(0.205458686, 0, 0.133462012, 0), Position = UDim2.new(0.0100000342, 0, 0.010000146, 0) }):Play()
 TweenService:Create(TabHose, TweenInfo.new(0.3), { Position = UDim2.new(0.223, 0, 0.143, 0) }):Play()
 TweenService:Create(TabButtons, TweenInfo.new(0.3), { Position = UDim2.new(0.008, 0, 0.143, 0) }):Play()
@@ -2711,15 +2716,64 @@ end
 function WindowFunctinos:SetWindowShape(shapeName)
     local key = tostring(shapeName or ""):lower():gsub("%s+", "")
     local radius
-    if key == "square" or key == "kotak" then radius = UDim.new(0, 0)
-    elseif key == "rounded" or key == "roundedcorner" or key == "membulat" then radius = UDim.new(0, 16)
-    elseif key == "capsule" or key == "pill" then radius = UDim.new(0.5, 0)
-    elseif key == "soft" or key == "softrounded" then radius = UDim.new(0, 24)
-    elseif key == "smooth" then radius = UDim.new(0, 10)
+    if key == "square" or key == "kotak" then radius = 0
+    elseif key == "rounded" or key == "roundedcorner" or key == "membulat" then radius = 16
+    elseif key == "capsule" or key == "pill" then radius = 0.5
+    elseif key == "soft" or key == "softrounded" then radius = 24
+    elseif key == "smooth" then radius = 10
     else return false, "Pilih Square, Rounded, Capsule, Soft, atau Smooth" end
-    UICorner.CornerRadius = radius
-    UICorner_2.CornerRadius = radius
-    UICorner_3.CornerRadius = radius
+
+    -- Terapkan bentuk ke seluruh permukaan GUI, termasuk Tab, Section,
+    -- panel, header, dan komponen yang sudah dibuat maupun dibuat kemudian.
+    local function applyShape(root)
+        for _, object in ipairs(root:GetDescendants()) do
+            if object:IsA("UICorner") then
+                local parent = object.Parent
+                if parent and parent:IsA("GuiObject") then
+                    -- Pertahankan elemen yang memang berbentuk lingkaran.
+                    local original = object:GetAttribute("NeverloseCircle")
+                    if original == nil then
+                        original = object.CornerRadius.Scale >= 0.45
+                        object:SetAttribute("NeverloseCircle", original)
+                    end
+                    if not original then
+                        if radius == 0.5 then
+                            object.CornerRadius = UDim.new(0, math.floor(math.min(parent.AbsoluteSize.X, parent.AbsoluteSize.Y) / 2))
+                        else
+                            object.CornerRadius = UDim.new(0, radius)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    applyShape(Frame)
+    -- Tab/Section baru yang ditambahkan setelah perubahan ikut memakai bentuk aktif.
+    if not WindowFunctinos._ShapeWatcher then
+        WindowFunctinos._ShapeWatcher = Frame.DescendantAdded:Connect(function(object)
+            if object:IsA("UICorner") then
+                task.defer(function()
+                    if object.Parent and object.Parent:IsA("GuiObject") then
+                        local original = object:GetAttribute("NeverloseCircle")
+                        if original == nil then
+                            original = object.CornerRadius.Scale >= 0.45
+                            object:SetAttribute("NeverloseCircle", original)
+                        end
+                        if not original then
+                            local current = WindowFunctinos._ActiveShapeRadius or 16
+                            if current == 0.5 then
+                                object.CornerRadius = UDim.new(0, math.floor(math.min(object.Parent.AbsoluteSize.X, object.Parent.AbsoluteSize.Y) / 2))
+                            else
+                                object.CornerRadius = UDim.new(0, current)
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+    end
+    WindowFunctinos._ActiveShapeRadius = radius
     return true, shapeName
 end
 

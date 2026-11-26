@@ -241,7 +241,15 @@ local toggle_valu = true
 local function ui_toggleong(val)
 local uptime = 1.4
 if val then
-TweenService:Create(Frame, TweenInfo.new(uptime, Enum.EasingStyle.Quint), { Size = ooldsize, Position = UDim2.new(0.5, 0, 0.5, 0) }):Play()
+TabHose.Visible = true
+TabButtons.Visible = true
+Frame_2.Visible = true
+Frame_3.Visible = true
+outlo.Visible = true
+outlo_2.Visible = true
+outlo_3.Visible = true
+DropShadow.Visible = true
+TweenService:Create(Frame, TweenInfo.new(uptime, Enum.EasingStyle.Quint), { Size = ooldsize, Position = oldPositionClose or UDim2.new(0.5, 0, 0.5, 0) }):Play()
 TweenService:Create(HeadName, TweenInfo.new(uptime / 3, Enum.EasingStyle.Quint), { Size = UDim2.new(0.205458686, 0, 0.133462012, 0), Position = UDim2.new(0.0100000342, 0, 0.010000146, 0) }):Play()
 TweenService:Create(TabHose, TweenInfo.new(0.3), { Position = UDim2.new(0.223, 0, 0.143, 0) }):Play()
 TweenService:Create(TabButtons, TweenInfo.new(0.3), { Position = UDim2.new(0.008, 0, 0.143, 0) }):Play()
@@ -257,7 +265,16 @@ TweenService:Create(Frame_2, TweenInfo.new(0.3), { BackgroundTransparency = 0 })
 TweenService:Create(Frame_3, TweenInfo.new(0.3), { BackgroundTransparency = 0.9 }):Play()
 TweenService:Create(DropShadow, TweenInfo.new(0.3), { ImageTransparency = 0.86 }):Play()
 else
+oldPositionClose = oldPositionClose or Frame.Position
 TweenService:Create(Frame, TweenInfo.new(uptime, Enum.EasingStyle.Quint), { Size = UDim2.new(0.14, 0, 0.14, 0), Position = oldPositionClose }):Play()
+TabHose.Visible = false
+TabButtons.Visible = false
+Frame_2.Visible = false
+Frame_3.Visible = false
+outlo.Visible = false
+outlo_2.Visible = false
+outlo_3.Visible = false
+DropShadow.Visible = false
 TweenService:Create(HeadName, TweenInfo.new(uptime / 1.2, Enum.EasingStyle.Quint), { Size = UDim2.new(0.9, 0, 0.5, 0), Position = UDim2.new(0.046, 0, 0.24, 0) }):Play()
 TweenService:Create(TabHose, TweenInfo.new(0.3), { Position = UDim2.new(1.5, 0, 0.143, 0) }):Play()
 TweenService:Create(TabButtons, TweenInfo.new(0.3), { Position = UDim2.new(-1.25, 0, 0.143, 0) }):Play()
@@ -288,9 +305,12 @@ ImageButton.ZIndex = 4
 ImageButton.Image = "rbxassetid://10002398990"
 ImageButton.ScaleType = Enum.ScaleType.Fit
 ImageButton.MouseButton1Click:Connect(function()
-toggle_valu = not toggle_valu
+-- Simpan posisi window saat masih terbuka. Jangan menimpa posisi ini saat restore.
 if toggle_valu then
 oldPositionClose = Frame.Position
+end
+toggle_valu = not toggle_valu
+if toggle_valu then
 TweenService:Create(ImageButton, TweenInfo.new(0.5), { Size = UDim2.new(0.0900000036, 0, 0.0900000036, 0), Position = UDim2.new(0.908723712, 0, 0.0239103697, 0), AnchorPoint = Vector2.new(0, 0) }):Play()
 else
 TweenService:Create(ImageButton, TweenInfo.new(0.5), { Size = UDim2.new(0.3, 0, 0.3, 0), Position = UDim2.new(1, 0, -0.009, 0), AnchorPoint = Vector2.new(1, 0) }):Play()
@@ -307,6 +327,7 @@ local function updateInput(input)
 local delta = input.Position - dragStart
 local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 game:GetService("TweenService"):Create(Frame, TweenInfo.new(dragSpeed), { Position = position }):Play()
+if not toggle_valu then oldPositionClose = position end
 end
 Frame.InputBegan:Connect(function(input)
 if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not toggle_valu then
@@ -560,6 +581,7 @@ if cc == Color3.fromRGB(0, 172, 247) then
 cc = NEVERLOSE.Themes.BlackgroundColor
 end
 TabButton.Name = "TabButton"
+TabButton.LayoutOrder = (tostring(TabNameString) == "Settings") and -1000 or 0
 TabButton.Parent = TabButtons
 TabButton.BackgroundColor3 = cc
 TabButton.BackgroundTransparency = 1
@@ -700,6 +722,12 @@ else
 tabcall(false, 0)
 end
 table.insert(Tabs, { Tab, tabcall })
+if tostring(TabNameString) == "Settings" then
+for _, existingTab in ipairs(Tabs) do
+if existingTab[1] ~= Tab then existingTab[2](false, 0) end
+end
+tabcall(true, 0)
+end
 cretate_button(TabButton).MouseButton1Click:Connect(function()
 for i, v in ipairs(Tabs) do
 if v[1] == Tab then
@@ -2726,6 +2754,10 @@ updateInput(input)
 end
 end
 end)
+-- Settings is built in automatically for every window; no extra caller setup required.
+if NEVERLOSE.AddGUISettings then
+    NEVERLOSE:AddGUISettings(WindowFunctinos)
+end
 return WindowFunctinos
 end
 function NEVERLOSE:KeySystem(TitleName, LinkKey, callback)
@@ -3363,81 +3395,98 @@ end
 end)
 end
 function NEVERLOSE:AddGUISettings(oxyWindow)
-local guiTab = oxyWindow:AddTab("Appearance", "home")
-local guiSec = guiTab:AddSection("GUI Theme", "left")
-local guiAppearanceSec = guiTab:AddSection("Window Style", "right")
-local guiManualSec = guiTab:AddSection("manual spam ui", "left")
-local guiTriggerSec = guiTab:AddSection("triggerbot ui", "right")
-local guiSizeSec = guiTab:AddSection("size & opacity", "right")
-local warnaList = {}
-warnaList[1] = "Biru Terang"
-warnaList[2] = "Merah"
-warnaList[3] = "Hijau"
-warnaList[4] = "Kuning"
-warnaList[5] = "Ungu"
-warnaList[6] = "Pink"
-warnaList[7] = "Orange"
-warnaList[8] = "Cyan"
-warnaList[9] = "Putih"
-warnaList[10] = "Hitam"
-warnaList[11] = "Biru Gelap"
-warnaList[12] = "Rainbow"
-local warnaList2 = {}
-warnaList2[1] = "Biru Terang"
-warnaList2[2] = "Merah"
-warnaList2[3] = "Hijau"
-warnaList2[4] = "Kuning"
-warnaList2[5] = "Ungu"
-warnaList2[6] = "Pink"
-warnaList2[7] = "Orange"
-warnaList2[8] = "Cyan"
-warnaList2[9] = "Putih"
-warnaList2[10] = "Hitam"
-warnaList2[11] = "Biru Gelap"
--- Tema rekomendasi: panel Midnight Navy dengan aksen Electric Lavender.
--- Input warna live: setiap perubahan teks langsung diterjemahkan ke HEX.
-oxyWindow:SetUIColor("Midnight Navy")
-oxyWindow:SetBorderColor("Electric Lavender")
-local uiHexResult = guiAppearanceSec:AddParagraph("HEX UI: " .. Color3ToHex(NEVERLOSE.Themes.BlackgroundColor))
-local borderHexResult = guiAppearanceSec:AddParagraph("HEX Border: " .. Color3ToHex(NEVERLOSE.Themes.StrokeColor))
-guiAppearanceSec:AddParagraph("Tema rekomendasi: Midnight Navy + Electric Lavender. Ketik nama warna Indonesia/Inggris, HEX, atau RGB.")
-guiAppearanceSec:AddInput("warna UI (nama warna)", "Midnight Navy / Slate / Pastel Blue", "Midnight Navy", function(value)
-    local ok, result = oxyWindow:SetUIColor(value)
-    if ok then uiHexResult:Text("HEX UI: " .. result) else uiHexResult:Text("HEX UI: — | " .. tostring(result)) end
-end, true)
-guiAppearanceSec:AddInput("warna border (nama warna)", "Electric Lavender / Ice Cyan / Gold", "Electric Lavender", function(value)
-    local ok, result = oxyWindow:SetBorderColor(value)
-    if ok then borderHexResult:Text("HEX Border: " .. result) else borderHexResult:Text("HEX Border: — | " .. tostring(result)) end
-end, true)
-guiAppearanceSec:AddInput("ketebalan border", "1 - 10", "3", function(value)
-    local ok, result = oxyWindow:SetBorderThickness(value)
-    if not ok then warn("[NEVERLOSE] Ketebalan border: " .. tostring(result)) end
-end)
-guiAppearanceSec:AddDropdown("bentuk window asli", {"Square", "Rounded", "Capsule", "Soft", "Smooth"}, "Rounded", function(value)
-    local ok, message = oxyWindow:SetWindowShape(value)
-    if not ok then warn("[NEVERLOSE] Bentuk window: " .. tostring(message)) end
-end)
-oxyWindow:SetWindowShape("Rounded")
+    -- Prevent duplicate Settings/Appearance tabs if older loader code also calls this function.
+    if oxyWindow._BuiltInSettingsTab then
+        return oxyWindow._BuiltInSettingsTab, oxyWindow._BuiltInAppearanceTab
+    end
 
-guiSec:AddDropdown("warna gui asli", warnaList, "Biru Terang", function(v) NEVERLOSE:SetGUIColor(v) end)
-guiSec:AddToggle("rainbow gui asli", false, function(v) NEVERLOSE:SetGUIRainbow(v) end)
-guiSec:AddSlider("opacity gui asli", 0, 90, 0, function(v) NEVERLOSE:SetGUIOpacity(v / 100) end)
-guiSec:AddSlider("size gui asli (%)", 50, 150, 100, function(v) NEVERLOSE:SetGUISizeScale(v / 100) end)
-guiSec:AddDropdown("warna text gui asli", { "Putih", "Hitam", "Kuning", "Merah", "Hijau", "Cyan", "Pink" }, "Putih", function(v) NEVERLOSE:SetGUITextColor(v) end)
-guiManualSec:AddDropdown("warna manual spam", warnaList2, "Biru Terang", function(v) NEVERLOSE:SetManualColor(v) end)
-guiManualSec:AddToggle("rainbow manual spam", false, function(v) NEVERLOSE:SetManualRainbow(v) end)
-guiManualSec:AddSlider("opacity manual spam", 0, 95, 58, function(v) NEVERLOSE:SetManualOpacity(v / 100) end)
-guiManualSec:AddSlider("size manual spam", 40, 150, 70, function(v) NEVERLOSE:SetManualSize(v) end)
-guiManualSec:AddSlider("hue manual (rainbow)", 0, 100, 55, function(v) _G.NEVERLOSE_GUI.manual.hue = v / 100 NEVERLOSE:ApplyHelperButton("ManualSpam") end)
-guiTriggerSec:AddDropdown("warna triggerbot", warnaList2, "Biru Terang", function(v) NEVERLOSE:SetTriggerColor(v) end)
-guiTriggerSec:AddToggle("rainbow triggerbot", false, function(v) NEVERLOSE:SetTriggerRainbow(v) end)
-guiTriggerSec:AddSlider("opacity triggerbot", 0, 95, 58, function(v) NEVERLOSE:SetTriggerOpacity(v / 100) end)
-guiTriggerSec:AddSlider("size triggerbot", 40, 150, 70, function(v) NEVERLOSE:SetTriggerSize(v) end)
-guiTriggerSec:AddSlider("hue trigger (rainbow)", 0, 100, 55, function(v) _G.NEVERLOSE_GUI.trigger.hue = v / 100 NEVERLOSE:ApplyHelperButton("Triggerbot") end)
-guiSizeSec:AddToggle("rainbow semua", false, function(v) NEVERLOSE:SetAllRainbow(v) end)
-guiSizeSec:AddSlider("size semua tombol", 40, 150, 70, function(v) NEVERLOSE:SetAllSize(v) end)
-guiSizeSec:AddSlider("opacity semua tombol", 0, 95, 58, function(v) NEVERLOSE:SetAllOpacity(v / 100) end)
-guiSizeSec:AddButton("reset warna gui", function() NEVERLOSE:ResetGUI() end)
-return guiTab
+    -- Settings is a dedicated, always-created tab for the actual main window.
+    local settingsTab = oxyWindow:AddTab("Settings", "list")
+    local settingsMainSec = settingsTab:AddSection("Main GUI Appearance", "left")
+    local settingsBorderSec = settingsTab:AddSection("Border & Window Shape", "right")
+
+    -- Keep helper-button controls separate so the Settings tab stays focused.
+    local guiTab = oxyWindow:AddTab("Appearance", "home")
+    local guiSec = guiTab:AddSection("Helper GUI Theme", "left")
+    local guiManualSec = guiTab:AddSection("Manual Spam UI", "left")
+    local guiTriggerSec = guiTab:AddSection("Triggerbot UI", "right")
+    local guiSizeSec = guiTab:AddSection("Size & Opacity", "right")
+
+    local warnaList = {
+        "Biru Terang", "Merah", "Hijau", "Kuning", "Ungu", "Pink",
+        "Orange", "Cyan", "Putih", "Hitam", "Biru Gelap", "Rainbow"
+    }
+    local warnaList2 = {
+        "Biru Terang", "Merah", "Hijau", "Kuning", "Ungu", "Pink",
+        "Orange", "Cyan", "Putih", "Hitam", "Biru Gelap"
+    }
+
+    -- Default premium palette: Midnight Navy + Electric Lavender.
+    oxyWindow:SetUIColor("Midnight Navy")
+    oxyWindow:SetBorderColor("Electric Lavender")
+    oxyWindow:SetBorderThickness(3)
+    oxyWindow:SetWindowShape("Rounded")
+
+    local uiHexResult = settingsMainSec:AddParagraph("HEX UI: " .. Color3ToHex(NEVERLOSE.Themes.BlackgroundColor))
+    local borderHexResult = settingsBorderSec:AddParagraph("HEX Border: " .. Color3ToHex(NEVERLOSE.Themes.StrokeColor))
+    settingsMainSec:AddParagraph("Ketik nama warna Indonesia/Inggris. HEX dan RGB juga didukung; hasil HEX diperbarui otomatis.")
+    settingsMainSec:AddInput("Warna GUI utama", "Midnight Navy / Pastel Blue / Lavender", "Midnight Navy", function(value)
+        local ok, result = oxyWindow:SetUIColor(value)
+        if ok then
+            uiHexResult:Text("HEX UI: " .. result)
+        else
+            uiHexResult:Text("HEX UI: — | " .. tostring(result))
+        end
+    end, true)
+    settingsBorderSec:AddInput("Warna border", "Electric Lavender / Ice Cyan / Gold", "Electric Lavender", function(value)
+        local ok, result = oxyWindow:SetBorderColor(value)
+        if ok then
+            borderHexResult:Text("HEX Border: " .. result)
+        else
+            borderHexResult:Text("HEX Border: — | " .. tostring(result))
+        end
+    end, true)
+    settingsBorderSec:AddInput("Ketebalan border", "1 - 10", "3", function(value)
+        local ok, result = oxyWindow:SetBorderThickness(value)
+        if not ok then warn("[NEVERLOSE] Ketebalan border: " .. tostring(result)) end
+    end)
+    settingsBorderSec:AddDropdown("Bentuk window utama", {"Square", "Rounded", "Capsule", "Soft", "Smooth"}, "Rounded", function(value)
+        local ok, message = oxyWindow:SetWindowShape(value)
+        if not ok then warn("[NEVERLOSE] Bentuk window: " .. tostring(message)) end
+    end)
+
+    -- Existing helper GUI settings remain available in Appearance.
+    guiSec:AddDropdown("Warna helper GUI", warnaList, "Biru Terang", function(v) NEVERLOSE:SetGUIColor(v) end)
+    guiSec:AddToggle("Rainbow helper GUI", false, function(v) NEVERLOSE:SetGUIRainbow(v) end)
+    guiSec:AddSlider("Opacity helper GUI", 0, 90, 0, function(v) NEVERLOSE:SetGUIOpacity(v / 100) end)
+    guiSec:AddSlider("Size helper GUI (%)", 50, 150, 100, function(v) NEVERLOSE:SetGUISizeScale(v / 100) end)
+    guiSec:AddDropdown("Warna text helper GUI", {"Putih", "Hitam", "Kuning", "Merah", "Hijau", "Cyan", "Pink"}, "Putih", function(v) NEVERLOSE:SetGUITextColor(v) end)
+
+    guiManualSec:AddDropdown("Warna manual spam", warnaList2, "Biru Terang", function(v) NEVERLOSE:SetManualColor(v) end)
+    guiManualSec:AddToggle("Rainbow manual spam", false, function(v) NEVERLOSE:SetManualRainbow(v) end)
+    guiManualSec:AddSlider("Opacity manual spam", 0, 95, 58, function(v) NEVERLOSE:SetManualOpacity(v / 100) end)
+    guiManualSec:AddSlider("Size manual spam", 40, 150, 70, function(v) NEVERLOSE:SetManualSize(v) end)
+    guiManualSec:AddSlider("Hue manual (rainbow)", 0, 100, 55, function(v)
+        _G.NEVERLOSE_GUI.manual.hue = v / 100
+        NEVERLOSE:ApplyHelperButton("ManualSpam")
+    end)
+
+    guiTriggerSec:AddDropdown("Warna triggerbot", warnaList2, "Biru Terang", function(v) NEVERLOSE:SetTriggerColor(v) end)
+    guiTriggerSec:AddToggle("Rainbow triggerbot", false, function(v) NEVERLOSE:SetTriggerRainbow(v) end)
+    guiTriggerSec:AddSlider("Opacity triggerbot", 0, 95, 58, function(v) NEVERLOSE:SetTriggerOpacity(v / 100) end)
+    guiTriggerSec:AddSlider("Size triggerbot", 40, 150, 70, function(v) NEVERLOSE:SetTriggerSize(v) end)
+    guiTriggerSec:AddSlider("Hue trigger (rainbow)", 0, 100, 55, function(v)
+        _G.NEVERLOSE_GUI.trigger.hue = v / 100
+        NEVERLOSE:ApplyHelperButton("Triggerbot")
+    end)
+
+    guiSizeSec:AddToggle("Rainbow semua", false, function(v) NEVERLOSE:SetAllRainbow(v) end)
+    guiSizeSec:AddSlider("Size semua tombol", 40, 150, 70, function(v) NEVERLOSE:SetAllSize(v) end)
+    guiSizeSec:AddSlider("Opacity semua tombol", 0, 95, 58, function(v) NEVERLOSE:SetAllOpacity(v / 100) end)
+    guiSizeSec:AddButton("Reset warna helper GUI", function() NEVERLOSE:ResetGUI() end)
+
+    oxyWindow._BuiltInSettingsTab = settingsTab
+    oxyWindow._BuiltInAppearanceTab = guiTab
+    return settingsTab, guiTab
 end
 return NEVERLOSE
